@@ -1,0 +1,19 @@
+{{define "base"}}
+<!doctype html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{template "title" .}} | Pirateca.com</title>
+  <meta name="description" content="Los libros no se roban, ¡se expropian!">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body class="flex min-h-full flex-col bg-stone-100 text-stone-900">
+  {{template "nav" .}}
+  <main class="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
+    {{template "main" .}}
+  </main>
+  {{template "footer" .}}
+</body>
+</html>
+{{end}}

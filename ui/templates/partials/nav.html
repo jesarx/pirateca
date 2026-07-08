@@ -1,0 +1,15 @@
+{{define "nav"}}
+<header class="border-b border-stone-300 bg-stone-50">
+  <div class="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-4">
+    <a href="/" class="text-xl font-bold tracking-tight">Pirateca<span class="text-red-700">.com</span></a>
+    <nav class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+      <a href="/books" class="hover:text-red-700 {{if eq .CurrentPath "/books"}}font-semibold text-red-700{{end}}">Libros</a>
+      <a href="/authors" class="hover:text-red-700 {{if eq .CurrentPath "/authors"}}font-semibold text-red-700{{end}}">Autores</a>
+      <a href="/publishers" class="hover:text-red-700 {{if eq .CurrentPath "/publishers"}}font-semibold text-red-700{{end}}">Editoriales</a>
+      <a href="/tags" class="hover:text-red-700 {{if eq .CurrentPath "/tags"}}font-semibold text-red-700{{end}}">Categorías</a>
+      <a href="/manifest" class="hover:text-red-700 {{if eq .CurrentPath "/manifest"}}font-semibold text-red-700{{end}}">Manifiesto</a>
+      <a href="/contact" class="hover:text-red-700 {{if eq .CurrentPath "/contact"}}font-semibold text-red-700{{end}}">Contacto</a>
+    </nav>
+  </div>
+</header>
+{{end}}
