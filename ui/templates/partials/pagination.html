@@ -3,11 +3,11 @@
 <nav class="mt-8 flex flex-wrap items-center justify-center gap-1 text-sm" aria-label="Paginación">
   {{range .Pagination}}
   {{if .Ellipsis}}
-  <span class="px-2 text-stone-400">…</span>
+  <span class="px-2 text-gray-400">…</span>
   {{else if .Current}}
-  <span class="rounded bg-red-700 px-3 py-1.5 font-semibold text-white">{{.Label}}</span>
+  <span class="rounded bg-gray-900 px-3 py-1.5 font-semibold text-white">{{.Label}}</span>
   {{else}}
-  <a href="{{.URL}}" class="rounded border border-stone-300 bg-white px-3 py-1.5 hover:border-red-700 hover:text-red-700">{{.Label}}</a>
+  <a href="{{.URL}}" class="rounded border border-gray-300 bg-white px-3 py-1.5 hover:border-gray-400 hover:text-blue-600">{{.Label}}</a>
   {{end}}
   {{end}}
 </nav>

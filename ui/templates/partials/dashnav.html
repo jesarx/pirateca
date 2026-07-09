@@ -1,9 +1,9 @@
 {{define "dashnav"}}
-<nav class="mb-6 flex flex-wrap items-center gap-2 border-b border-stone-300 pb-4 text-sm">
-  <a href="/dashboard" class="rounded px-3 py-1.5 {{if eq .CurrentPath "/dashboard"}}bg-red-700 font-semibold text-white{{else}}border border-stone-300 bg-white hover:border-red-700 hover:text-red-700{{end}}">Resumen</a>
-  <a href="/dashboard/books" class="rounded px-3 py-1.5 {{if eq .CurrentPath "/dashboard/books"}}bg-red-700 font-semibold text-white{{else}}border border-stone-300 bg-white hover:border-red-700 hover:text-red-700{{end}}">Libros</a>
-  <a href="/dashboard/authors" class="rounded px-3 py-1.5 {{if eq .CurrentPath "/dashboard/authors"}}bg-red-700 font-semibold text-white{{else}}border border-stone-300 bg-white hover:border-red-700 hover:text-red-700{{end}}">Autores</a>
-  <a href="/dashboard/publishers" class="rounded px-3 py-1.5 {{if eq .CurrentPath "/dashboard/publishers"}}bg-red-700 font-semibold text-white{{else}}border border-stone-300 bg-white hover:border-red-700 hover:text-red-700{{end}}">Editoriales</a>
-  <a href="/dashboard/books/new" class="ml-auto rounded bg-red-700 px-3 py-1.5 font-semibold text-white hover:bg-red-800">+ Nuevo libro</a>
+<nav class="mb-6 flex flex-wrap items-center gap-2 border-b border-gray-300 pb-4 text-sm">
+  <a href="/dashboard" class="rounded px-3 py-1.5 {{if eq .CurrentPath "/dashboard"}}bg-gray-900 font-semibold text-white{{else}}border border-gray-300 bg-white hover:border-gray-400 hover:text-blue-600{{end}}">Resumen</a>
+  <a href="/dashboard/books" class="rounded px-3 py-1.5 {{if eq .CurrentPath "/dashboard/books"}}bg-gray-900 font-semibold text-white{{else}}border border-gray-300 bg-white hover:border-gray-400 hover:text-blue-600{{end}}">Libros</a>
+  <a href="/dashboard/authors" class="rounded px-3 py-1.5 {{if eq .CurrentPath "/dashboard/authors"}}bg-gray-900 font-semibold text-white{{else}}border border-gray-300 bg-white hover:border-gray-400 hover:text-blue-600{{end}}">Autores</a>
+  <a href="/dashboard/publishers" class="rounded px-3 py-1.5 {{if eq .CurrentPath "/dashboard/publishers"}}bg-gray-900 font-semibold text-white{{else}}border border-gray-300 bg-white hover:border-gray-400 hover:text-blue-600{{end}}">Editoriales</a>
+  <a href="/dashboard/books/new" class="ml-auto rounded bg-gray-900 px-3 py-1.5 font-semibold text-white hover:bg-gray-700">+ Nuevo libro</a>
 </nav>
 {{end}}
