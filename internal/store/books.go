@@ -100,7 +100,8 @@ func (s *Store) ListBooks(ctx context.Context, f BookFilters) ([]Book, Metadata,
 	query := fmt.Sprintf(`
 		SELECT
 			count(*) OVER(),
-			b.id, b.created_at, b.title, b.short_title, b.year, b.tags,
+			b.id, b.created_at, b.title, b.short_title,
+			COALESCE(b.year, 0), COALESCE(b.tags, '{}'),
 			b.slug, COALESCE(b.filename, ''), b.dir_dwl, b.version,
 			b.auth_id, COALESCE(a.name, ''), a.last_name, a.slug,
 			b.auth2_id, a2.name, a2.last_name, a2.slug,
@@ -162,7 +163,8 @@ func (s *Store) GetBookBySlug(ctx context.Context, slug string) (*Book, error) {
 
 	query := `
 		SELECT
-			b.id, b.created_at, b.title, b.short_title, b.year, b.tags,
+			b.id, b.created_at, b.title, b.short_title,
+			COALESCE(b.year, 0), COALESCE(b.tags, '{}'),
 			b.slug, COALESCE(b.filename, ''), COALESCE(b.isbn, ''),
 			COALESCE(b.description, ''), COALESCE(b.pages, 0),
 			COALESCE(b.external_link, ''), b.dir_dwl, b.version,

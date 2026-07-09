@@ -1,13 +1,15 @@
-{{define "title"}}Libros{{end}}
+{{define "title"}}{{with .Heading}}{{.}}{{else}}Libros{{end}}{{end}}
 
 {{define "main"}}
 <section>
   <div class="mb-4 flex flex-col gap-3 border-b border-stone-300 pb-4 md:flex-row md:items-end md:justify-between">
-    <h1 class="text-2xl font-bold">Libros</h1>
+    <h1 class="text-2xl font-bold">{{with .Heading}}{{.}}{{else}}Libros{{end}}</h1>
 
-    <form method="GET" action="/books" class="flex flex-col gap-2 sm:flex-row sm:items-center">
+    <form method="GET" action="{{.CurrentPath}}" class="flex flex-col gap-2 sm:flex-row sm:items-center">
+      {{if eq .CurrentPath "/books"}}
       {{with .Filters.AuthorSlug}}<input type="hidden" name="authslug" value="{{.}}">{{end}}
       {{with .Filters.PublisherSlug}}<input type="hidden" name="pubslug" value="{{.}}">{{end}}
+      {{end}}
       {{if .Filters.Tags}}<input type="hidden" name="tags" value="{{index .Filters.Tags 0}}">{{end}}
       <input
         type="search" name="title" value="{{.Filters.Search}}" placeholder="Buscar por título…"
@@ -59,18 +61,8 @@
   <p class="py-12 text-center text-stone-500">No se encontraron libros.</p>
   {{end}}
 
-  {{if .Pagination}}
-  <nav class="mt-8 flex flex-wrap items-center justify-center gap-1 text-sm" aria-label="Paginación">
-    {{range .Pagination}}
-    {{if .Ellipsis}}
-    <span class="px-2 text-stone-400">…</span>
-    {{else if .Current}}
-    <span class="rounded bg-red-700 px-3 py-1.5 font-semibold text-white">{{.Label}}</span>
-    {{else}}
-    <a href="{{.URL}}" class="rounded border border-stone-300 bg-white px-3 py-1.5 hover:border-red-700 hover:text-red-700">{{.Label}}</a>
-    {{end}}
-    {{end}}
-  </nav>
+  {{template "pagination" .}}
+  {{if .Metadata.TotalRecords}}
   <p class="mt-2 text-center text-xs text-stone-500">{{.Metadata.TotalRecords}} libros</p>
   {{end}}
 </section>

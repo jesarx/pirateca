@@ -15,7 +15,13 @@ import (
 type templateData struct {
 	CurrentYear int
 	CurrentPath string
+	Heading     string
+	Search      string
 	Books       []store.Book
+	Book        *store.Book
+	Authors     []store.Author
+	Publishers  []store.Publisher
+	Tags        []store.Tag
 	Metadata    store.Metadata
 	Filters     store.BookFilters
 	SortOptions []sortOption

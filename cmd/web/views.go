@@ -32,6 +32,34 @@ func bookSortOptions(current string) []sortOption {
 	return opts
 }
 
+func authorSortOptions(current string) []sortOption {
+	opts := []sortOption{
+		{Value: "last_name", Label: "Apellido (A-Z)"},
+		{Value: "-last_name", Label: "Apellido (Z-A)"},
+		{Value: "name", Label: "Nombre (A-Z)"},
+		{Value: "-name", Label: "Nombre (Z-A)"},
+		{Value: "book_count", Label: "# de libros (menor a mayor)"},
+		{Value: "-book_count", Label: "# de libros (mayor a menor)"},
+	}
+	for i := range opts {
+		opts[i].Selected = opts[i].Value == current
+	}
+	return opts
+}
+
+func publisherSortOptions(current string) []sortOption {
+	opts := []sortOption{
+		{Value: "name", Label: "Nombre (A-Z)"},
+		{Value: "-name", Label: "Nombre (Z-A)"},
+		{Value: "book_count", Label: "# de libros (menor a mayor)"},
+		{Value: "-book_count", Label: "# de libros (mayor a menor)"},
+	}
+	for i := range opts {
+		opts[i].Selected = opts[i].Value == current
+	}
+	return opts
+}
+
 type pageLink struct {
 	Label    string
 	URL      string
@@ -39,10 +67,10 @@ type pageLink struct {
 	Ellipsis bool
 }
 
-// buildPagination arma los enlaces de paginación conservando el resto de
-// los query params: primera y última página siempre visibles, ventana de
-// ±2 alrededor de la actual y elipsis en los huecos.
-func buildPagination(m store.Metadata, qs url.Values) []pageLink {
+// buildPagination arma los enlaces de paginación conservando el path
+// actual y el resto de los query params: primera y última página siempre
+// visibles, ventana de ±2 alrededor de la actual y elipsis en los huecos.
+func buildPagination(m store.Metadata, path string, qs url.Values) []pageLink {
 	if m.LastPage <= 1 {
 		return nil
 	}
@@ -53,7 +81,7 @@ func buildPagination(m store.Metadata, qs url.Values) []pageLink {
 			values[k] = v
 		}
 		values.Set("page", strconv.Itoa(page))
-		return "/books?" + values.Encode()
+		return path + "?" + values.Encode()
 	}
 
 	var links []pageLink

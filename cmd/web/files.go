@@ -70,3 +70,15 @@ var imageExts = []string{".jpg", ".jpeg", ".png", ".gif", ".webp"}
 func (app *application) serveCover(w http.ResponseWriter, r *http.Request) {
 	app.serveUpload(w, r, "covers", imageExts, false)
 }
+
+func (app *application) servePdf(w http.ResponseWriter, r *http.Request) {
+	app.serveUpload(w, r, "pdfs", []string{".pdf"}, true)
+}
+
+func (app *application) serveEpub(w http.ResponseWriter, r *http.Request) {
+	app.serveUpload(w, r, "epubs", []string{".epub"}, true)
+}
+
+func (app *application) serveTorrent(w http.ResponseWriter, r *http.Request) {
+	app.serveUpload(w, r, "torrents", []string{".torrent"}, true)
+}

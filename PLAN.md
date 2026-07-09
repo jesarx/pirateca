@@ -39,12 +39,14 @@ actualiza al terminar.
   fases: `GetBookBySlug` (para Fase 2) y el servido de portadas
   `/images?file=` (para que el listado tenga imágenes). Verificado contra
   un Postgres 16 local con las migraciones reales y datos de prueba.
-- [ ] **Fase 2 — Catálogo completo**: detalle `/books/{slug}`, autores,
-  editoriales, categorías, búsqueda y ordenamiento (query params, como el
-  sitio actual).
-- [ ] **Fase 3 — Archivos**: portadas, descargas PDF/EPUB/torrent
-  (portar `serveFile` de `main:cmd/api/files.go`, que ya valida
-  extensiones y paths), respetando `dir_dwl` y `external_link`.
+- [x] **Fase 2 — Catálogo completo**: detalle `/books/{slug}` (portada,
+  descripción, meta, botones de descarga/liga externa/copiar enlace),
+  `/authors` y `/publishers` con búsqueda + orden + conteo de libros,
+  `/authors/{slug}` y `/publishers/{slug}` (listado de libros filtrado),
+  `/tags`. Verificado contra el dump real del VPS (2026-06-29).
+- [x] **Fase 3 — Archivos**: portadas y descargas PDF/EPUB/torrent con
+  Content-Disposition (validación de extensión y path traversal portada
+  del código viejo). La *subida* de archivos es parte de la Fase 4.
 - [ ] **Fase 4 — Admin**: login con sesión (cookie, bcrypt contra tabla
   `users` existente), dashboard CRUD de libros/autores/editoriales,
   subida de archivos, protección CSRF.
@@ -54,6 +56,16 @@ actualiza al terminar.
   (decisión del usuario), redirects si hiciera falta.
 
 ## Notas / hallazgos
+
+- **El esquema real del VPS difiere de las migraciones 1-13** (confirmado
+  con el backup `pirateca_20260629.sql`): `books.year` y `books.tags` son
+  nullables (cambio manual) y `dir_dwl` es `NOT NULL`. La migración
+  `000014_sync_real_schema` documenta esto y es un no-op en la base real
+  (verificado). Las queries usan `COALESCE` para year/tags/filename/isbn/
+  description/pages/external_link por si acaso. La base real también tiene
+  las tablas `temporal` (resto de una importación vieja, se puede tirar
+  cuando quieras) y `schema_migrations` (bookkeeping de golang-migrate).
+- La base real tiene 302 libros, 227 autores, 99 editoriales y 1 usuario.
 
 - El índice `books_title_idx` (migración 3) usa `to_tsvector('simple',
   title)` pero la búsqueda usa `'spanish'` + `unaccent`, así que ese
