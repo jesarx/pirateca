@@ -23,6 +23,12 @@ func (app *application) booksHandler(w http.ResponseWriter, r *http.Request) {
 	app.renderBookList(w, r, "", bookFiltersFromQuery(r.URL.Query()))
 }
 
+func (app *application) staticPage(page string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		app.render(w, r, http.StatusOK, page, app.newTemplateData(r))
+	}
+}
+
 // authorBooksHandler y publisherBooksHandler reutilizan el listado de
 // libros fijando el filtro desde el path (/authors/{slug}), que es como
 // funcionaba el sitio viejo con ?authslug=.
@@ -35,7 +41,7 @@ func (app *application) authorBooksHandler(w http.ResponseWriter, r *http.Reques
 	author, err := app.store.GetAuthorBySlug(r.Context(), r.PathValue("slug"))
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			app.notFound(w)
+			app.notFound(w, r)
 		} else {
 			app.serverError(w, r, err)
 		}
@@ -56,7 +62,7 @@ func (app *application) publisherBooksHandler(w http.ResponseWriter, r *http.Req
 	publisher, err := app.store.GetPublisherBySlug(r.Context(), r.PathValue("slug"))
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			app.notFound(w)
+			app.notFound(w, r)
 		} else {
 			app.serverError(w, r, err)
 		}
@@ -87,6 +93,10 @@ func (app *application) renderBookList(w http.ResponseWriter, r *http.Request, h
 	data.Filters = filters
 	data.SortOptions = bookSortOptions(filters.Sort)
 	data.Pagination = buildPagination(metadata, r.URL.Path, r.URL.Query())
+	// El anuncio solo aparece en la portada del catálogo, sin filtros.
+	data.ShowNews = r.URL.Path == "/books" && filters.Search == "" &&
+		len(filters.Tags) == 0 && filters.AuthorSlug == "" &&
+		filters.PublisherSlug == "" && filters.Page <= 1
 
 	app.render(w, r, http.StatusOK, "books.html", data)
 }
@@ -100,7 +110,7 @@ func (app *application) bookDetailHandler(w http.ResponseWriter, r *http.Request
 	book, err := app.store.GetBookBySlug(r.Context(), r.PathValue("slug"))
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			app.notFound(w)
+			app.notFound(w, r)
 		} else {
 			app.serverError(w, r, err)
 		}

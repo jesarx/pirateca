@@ -53,10 +53,16 @@ actualiza al terminar.
   delicado portado tal cual (ver notas), CSRF por chequeo de
   Origin/Referer + SameSite=Lax, autollenado por ISBN vía OpenLibrary.
   Verificado end-to-end con PDF/PNG reales contra la base real.
-- [ ] **Fase 5 — Pulido y deploy**: páginas estáticas (manifiesto,
-  contacto, noticias), pendientes del frontend viejo, deploy en el VPS:
-  **nginx** como reverse proxy y unit de systemd llamado **`pirateca`**
-  (decisión del usuario), redirects si hiciera falta.
+- [x] **Fase 5 — Pulido y deploy**: manifiesto, contacto y la noticia
+  «Mal que dura cien años» portados (el post "volvimos" era un duplicado
+  y no se portó); banner de anuncio en la portada del catálogo; página
+  404 con layout; dashboard con estadísticas (tiles de catálogo y
+  visitas, gráficas de visitas por día, libros por mes y top categorías,
+  últimos libros); contador de visitas (migración 000016, acumulado en
+  memoria con flush cada 30s y al apagar, ignora bots y solo cuenta
+  páginas públicas); apagado ordenado del servidor; `deploy/` con
+  `pirateca.service` (systemd), config de nginx y `DEPLOY.md` con el
+  instructivo copy-paste.
 
 ## Notas / hallazgos
 
@@ -83,6 +89,12 @@ actualiza al terminar.
   migrations/000015_fix_slug_rotation.up.sql` o vía golang-migrate.
 - El login de prueba local es test@pirateca.com / prueba123 (solo existe
   en la base local del sandbox, no en el VPS).
+- `schema_migrations` del VPS está en 11 aunque el esquema tiene los
+  cambios de la 12 y 13 (más deriva manual). El DEPLOY.md lo sincroniza
+  a 16 tras aplicar las migraciones nuevas (15 y 16; la 14 es no-op).
+- Para el deploy seguir `deploy/DEPLOY.md`. Migraciones que el VPS
+  necesita: 000015 (fix slugs) y 000016 (tabla visits) + GRANT sobre
+  visits al usuario del DSN.
 
 - **El esquema real del VPS difiere de las migraciones 1-13** (confirmado
   con el backup `pirateca_20260629.sql`): `books.year` y `books.tags` son

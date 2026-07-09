@@ -63,6 +63,49 @@ func (app *application) logoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/books", http.StatusSeeOther)
 }
 
+// ---- Dashboard: resumen con estadísticas ----
+
+func (app *application) dashboardHomeHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	catalog, err := app.store.GetCatalogStats(ctx)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	visits, err := app.store.GetVisitStats(ctx)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	months, err := app.store.GetBooksPerMonth(ctx)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	tags, err := app.store.ListTags(ctx)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	latest, _, err := app.store.ListBooks(ctx, store.BookFilters{PageSize: 5})
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	data := app.newTemplateData(r)
+	data.Dash = &dashData{
+		Catalog:     catalog,
+		Visits:      visits,
+		VisitBars:   buildVisitBars(visits.Daily),
+		MonthBars:   buildMonthBars(months),
+		TagBars:     buildTagBars(tags, 10),
+		LatestBooks: latest,
+	}
+	app.render(w, r, http.StatusOK, "dashboard-home.html", data)
+}
+
 // ---- Dashboard: libros ----
 
 func (app *application) dashboardBooksHandler(w http.ResponseWriter, r *http.Request) {
@@ -428,19 +471,19 @@ func (app *application) deleteBookHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	app.logger.Info("book deleted", "slug", book.Slug, "filename", book.Filename)
-	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+	http.Redirect(w, r, "/dashboard/books", http.StatusSeeOther)
 }
 
 func (app *application) bookFromPath(w http.ResponseWriter, r *http.Request) (*store.Book, bool) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
-		app.notFound(w)
+		app.notFound(w, r)
 		return nil, false
 	}
 	book, err := app.store.GetBookByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			app.notFound(w)
+			app.notFound(w, r)
 		} else {
 			app.serverError(w, r, err)
 		}

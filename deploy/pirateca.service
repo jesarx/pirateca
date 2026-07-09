@@ -1,0 +1,27 @@
+[Unit]
+Description=Pirateca - biblioteca digital
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=pirateca
+Group=pirateca
+WorkingDirectory=/opt/pirateca
+ExecStart=/opt/pirateca/pirateca -env production -addr 127.0.0.1:4000
+EnvironmentFile=/etc/pirateca.env
+Restart=on-failure
+RestartSec=3
+
+# El apagado ordenado hace un último flush del contador de visitas.
+KillSignal=SIGTERM
+TimeoutStopSec=15
+
+# Endurecimiento básico
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/opt/pirateca/uploads
+
+[Install]
+WantedBy=multi-user.target

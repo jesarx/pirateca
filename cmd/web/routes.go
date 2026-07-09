@@ -20,6 +20,9 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("GET /publishers", app.publishersHandler)
 	mux.HandleFunc("GET /publishers/{slug}", app.publisherBooksHandler)
 	mux.HandleFunc("GET /tags", app.tagsHandler)
+	mux.HandleFunc("GET /manifest", app.staticPage("manifest.html"))
+	mux.HandleFunc("GET /contact", app.staticPage("contact.html"))
+	mux.HandleFunc("GET /news/mal-que-dura-cien-anos", app.staticPage("news-mal-que-dura-cien-anos.html"))
 
 	mux.HandleFunc("GET /images", app.serveCover)
 	mux.HandleFunc("GET /pdfs", app.servePdf)
@@ -30,7 +33,8 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("POST /admin/login", app.loginHandler)
 	mux.HandleFunc("POST /admin/logout", app.logoutHandler)
 
-	mux.HandleFunc("GET /dashboard", app.requireAuth(app.dashboardBooksHandler))
+	mux.HandleFunc("GET /dashboard", app.requireAuth(app.dashboardHomeHandler))
+	mux.HandleFunc("GET /dashboard/books", app.requireAuth(app.dashboardBooksHandler))
 	mux.HandleFunc("GET /dashboard/books/new", app.requireAuth(app.newBookFormHandler))
 	mux.HandleFunc("POST /dashboard/books/new", app.requireAuth(app.createBookHandler))
 	mux.HandleFunc("GET /dashboard/books/{id}/edit", app.requireAuth(app.editBookFormHandler))
@@ -47,5 +51,5 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("POST /dashboard/publishers/{id}/edit", app.requireAuth(app.updatePublisherHandler))
 	mux.HandleFunc("POST /dashboard/publishers/{id}/delete", app.requireAuth(app.deletePublisherHandler))
 
-	return app.recoverPanic(app.logRequest(app.securityHeaders(app.checkOrigin(mux))))
+	return app.recoverPanic(app.logRequest(app.securityHeaders(app.checkOrigin(app.countVisits(mux)))))
 }

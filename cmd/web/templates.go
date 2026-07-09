@@ -28,6 +28,8 @@ type templateData struct {
 	Filters         store.BookFilters
 	SortOptions     []sortOption
 	Pagination      []pageLink
+	Dash            *dashData
+	ShowNews        bool
 }
 
 func (app *application) newTemplateData(r *http.Request) templateData {

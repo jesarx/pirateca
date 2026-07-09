@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"database/sql"
 	"flag"
@@ -8,6 +9,8 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/jesarx/pirateca/internal/store"
@@ -31,6 +34,7 @@ type application struct {
 	store         *store.Store
 	templates     map[string]*template.Template
 	sessionSecret []byte
+	visits        *visitCounter
 }
 
 func main() {
@@ -68,6 +72,7 @@ func main() {
 		logger:        logger,
 		templates:     templates,
 		sessionSecret: sessionSecret,
+		visits:        newVisitCounter(),
 	}
 
 	// El DSN es opcional durante el desarrollo del esqueleto; las páginas
@@ -90,15 +95,39 @@ func main() {
 		Addr:         cfg.addr,
 		Handler:      app.routes(),
 		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
+		WriteTimeout: 5 * time.Minute, // descargas y subidas de PDFs grandes
 		IdleTimeout:  time.Minute,
 		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),
 	}
 
+	// Apagado ordenado: en SIGINT/SIGTERM se drenan las conexiones y se
+	// hace un último flush del contador de visitas.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	flusherDone := make(chan struct{})
+	go func() {
+		app.startVisitFlusher(ctx)
+		close(flusherDone)
+	}()
+
+	go func() {
+		<-ctx.Done()
+		logger.Info("shutting down")
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		srv.Shutdown(shutdownCtx)
+	}()
+
 	logger.Info("starting server", "addr", cfg.addr, "env", cfg.env)
 	err = srv.ListenAndServe()
-	logger.Error(err.Error())
-	os.Exit(1)
+	if err != nil && err != http.ErrServerClosed {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+	stop()
+	<-flusherDone
+	logger.Info("server stopped")
 }
 
 func openDB(dsn string) (*sql.DB, error) {

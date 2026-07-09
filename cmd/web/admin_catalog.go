@@ -181,13 +181,13 @@ func (app *application) deletePublisherHandler(w http.ResponseWriter, r *http.Re
 func (app *application) authorFromPath(w http.ResponseWriter, r *http.Request) (*store.Author, bool) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
-		app.notFound(w)
+		app.notFound(w, r)
 		return nil, false
 	}
 	author, err := app.store.GetAuthorByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			app.notFound(w)
+			app.notFound(w, r)
 		} else {
 			app.serverError(w, r, err)
 		}
@@ -199,13 +199,13 @@ func (app *application) authorFromPath(w http.ResponseWriter, r *http.Request) (
 func (app *application) publisherFromPath(w http.ResponseWriter, r *http.Request) (*store.Publisher, bool) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
-		app.notFound(w)
+		app.notFound(w, r)
 		return nil, false
 	}
 	publisher, err := app.store.GetPublisherByID(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			app.notFound(w)
+			app.notFound(w, r)
 		} else {
 			app.serverError(w, r, err)
 		}

@@ -42,7 +42,7 @@ func (app *application) serveUpload(w http.ResponseWriter, r *http.Request, subd
 	file, err := os.Open(filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			app.notFound(w)
+			app.notFound(w, r)
 		} else {
 			app.serverError(w, r, err)
 		}

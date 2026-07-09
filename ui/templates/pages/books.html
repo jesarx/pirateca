@@ -1,6 +1,13 @@
 {{define "title"}}{{with .Heading}}{{.}}{{else}}Libros{{end}}{{end}}
 
 {{define "main"}}
+{{if .ShowNews}}
+<a href="/news/mal-que-dura-cien-anos" class="mb-6 block rounded border border-stone-300 bg-white px-5 py-3 shadow-sm hover:border-red-700">
+  <p class="text-xs text-stone-500">2024 · Anuncio</p>
+  <p class="text-sm font-semibold">La Pirateca en «Mal que dura cien años»</p>
+  <p class="text-sm text-stone-600">Nuestro texto aparece en la página 75 de esta compilación editada por Creative Commons México.</p>
+</a>
+{{end}}
 <section>
   <div class="mb-4 flex flex-col gap-3 border-b border-stone-300 pb-4 md:flex-row md:items-end md:justify-between">
     <h1 class="text-2xl font-bold">{{with .Heading}}{{.}}{{else}}Libros{{end}}</h1>

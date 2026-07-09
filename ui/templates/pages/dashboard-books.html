@@ -2,17 +2,13 @@
 
 {{define "main"}}
 <section>
-  <div class="mb-4 flex flex-col gap-3 border-b border-stone-300 pb-4 md:flex-row md:items-end md:justify-between">
-    <h1 class="text-2xl font-bold">Dashboard · Libros</h1>
-    <div class="flex flex-wrap items-center gap-2">
-      <form method="GET" action="/dashboard" class="flex gap-2">
-        <input type="search" name="title" value="{{.Filters.Search}}" placeholder="Buscar por título…"
-          class="rounded border border-stone-300 bg-white px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
-        <button type="submit" class="rounded border border-stone-400 px-3 py-1.5 text-sm hover:border-red-700 hover:text-red-700">Buscar</button>
-      </form>
-      <a href="/dashboard/books/new" class="rounded bg-red-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-800">+ Nuevo libro</a>
-    </div>
-  </div>
+  <h1 class="mb-4 text-2xl font-bold">Dashboard · Libros</h1>
+  {{template "dashnav" .}}
+  <form method="GET" action="/dashboard/books" class="mb-4 flex gap-2">
+    <input type="search" name="title" value="{{.Filters.Search}}" placeholder="Buscar por título…"
+      class="rounded border border-stone-300 bg-white px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
+    <button type="submit" class="rounded border border-stone-400 px-3 py-1.5 text-sm hover:border-red-700 hover:text-red-700">Buscar</button>
+  </form>
 
   {{if .Books}}
   <div class="overflow-x-auto rounded border border-stone-300 bg-white">

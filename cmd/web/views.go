@@ -2,7 +2,9 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
+	"sort"
 	"strconv"
 
 	"github.com/jesarx/pirateca/internal/store"
@@ -58,6 +60,100 @@ func publisherSortOptions(current string) []sortOption {
 		opts[i].Selected = opts[i].Value == current
 	}
 	return opts
+}
+
+// chartBar es una barra precalculada para las gráficas CSS del dashboard
+// (una sola serie, magnitud por longitud, tooltip nativo con title).
+type chartBar struct {
+	Label   string // etiqueta de eje; vacía = sin etiqueta (se rotulan pocas)
+	Value   int64
+	Pct     float64 // porcentaje de la barra respecto al máximo (0-100)
+	Tooltip string
+	URL     string // opcional: la barra enlaza (p. ej. a la categoría)
+}
+
+func barPct(value, max int64) float64 {
+	if max <= 0 || value <= 0 {
+		return 0
+	}
+	return float64(value) / float64(max) * 100
+}
+
+type dashData struct {
+	Catalog     store.CatalogStats
+	Visits      store.VisitStats
+	VisitBars   []chartBar
+	MonthBars   []chartBar
+	TagBars     []chartBar
+	LatestBooks []store.Book
+}
+
+var spanishMonths = [...]string{"ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"}
+
+func buildVisitBars(daily []store.DayCount) []chartBar {
+	var max int64
+	for _, d := range daily {
+		if d.Count > max {
+			max = d.Count
+		}
+	}
+	bars := make([]chartBar, 0, len(daily))
+	for i, d := range daily {
+		label := ""
+		// Rotular uno de cada cinco días y el último.
+		if i%5 == 0 || i == len(daily)-1 {
+			label = fmt.Sprintf("%d %s", d.Day.Day(), spanishMonths[d.Day.Month()-1])
+		}
+		bars = append(bars, chartBar{
+			Label:   label,
+			Value:   d.Count,
+			Pct:     barPct(d.Count, max),
+			Tooltip: fmt.Sprintf("%d de %s: %d visitas", d.Day.Day(), spanishMonths[d.Day.Month()-1], d.Count),
+		})
+	}
+	return bars
+}
+
+func buildMonthBars(months []store.MonthCount) []chartBar {
+	var max int64
+	for _, m := range months {
+		if m.Count > max {
+			max = m.Count
+		}
+	}
+	bars := make([]chartBar, 0, len(months))
+	for _, m := range months {
+		name := spanishMonths[m.Month.Month()-1]
+		bars = append(bars, chartBar{
+			Label:   name,
+			Value:   m.Count,
+			Pct:     barPct(m.Count, max),
+			Tooltip: fmt.Sprintf("%s %d: %d libros", name, m.Month.Year(), m.Count),
+		})
+	}
+	return bars
+}
+
+func buildTagBars(tags []store.Tag, top int) []chartBar {
+	sort.Slice(tags, func(i, j int) bool { return tags[i].Books > tags[j].Books })
+	if len(tags) > top {
+		tags = tags[:top]
+	}
+	var max int64
+	if len(tags) > 0 {
+		max = int64(tags[0].Books)
+	}
+	bars := make([]chartBar, 0, len(tags))
+	for _, t := range tags {
+		bars = append(bars, chartBar{
+			Label:   t.Name,
+			Value:   int64(t.Books),
+			Pct:     barPct(int64(t.Books), max),
+			Tooltip: fmt.Sprintf("%s: %d libros", t.Name, t.Books),
+			URL:     "/books?tags=" + url.QueryEscape(t.Name),
+		})
+	}
+	return bars
 }
 
 type pageLink struct {
