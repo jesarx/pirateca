@@ -1,10 +1,23 @@
 {{define "title"}}Página no encontrada{{end}}
 
 {{define "main"}}
-<section class="py-16 text-center">
-  <p class="text-6xl font-bold text-gray-300">404</p>
-  <h1 class="mt-4 text-2xl font-bold">Página no encontrada</h1>
-  <p class="mt-2 text-gray-600">Lo que buscas no existe o fue expropiado a otra parte.</p>
-  <p class="mt-6"><a href="/books" class="rounded bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">Ir al catálogo</a></p>
+<section class="flex flex-col items-center py-16 text-center">
+  <img src="/static/images/logo-libro.png" alt="" class="w-40 opacity-90 drop-shadow-sm">
+
+  <p class="mt-6 font-logo text-7xl lowercase text-brand">404</p>
+  <h1 class="mt-2 text-2xl font-bold text-gray-800">Esta página fue expropiada</h1>
+  <p class="mt-2 max-w-md text-gray-600">
+    …pero no encontramos a dónde. La dirección que buscas no existe o se
+    movió a otro estante.
+  </p>
+
+  <div class="mt-8 flex flex-wrap justify-center gap-3">
+    <a href="/books" class="rounded bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-gray-700">
+      Ir al catálogo
+    </a>
+    <a href="/tags" class="rounded border border-gray-400 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:border-gray-500 hover:text-blue-600">
+      Explorar categorías
+    </a>
+  </div>
 </section>
 {{end}}

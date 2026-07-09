@@ -13,6 +13,10 @@ func (app *application) routes() http.Handler {
 
 	mux.HandleFunc("GET /health", app.healthHandler)
 	mux.HandleFunc("GET /{$}", app.homeHandler)
+	// Comodín: cualquier ruta sin match sirve la página 404 del sitio en
+	// lugar del "404 page not found" plano de net/http. Los patrones más
+	// específicos de arriba ganan sobre este.
+	mux.HandleFunc("/", app.notFoundHandler)
 	mux.HandleFunc("GET /books", app.booksHandler)
 	mux.HandleFunc("GET /books/{slug}", app.bookDetailHandler)
 	mux.HandleFunc("GET /authors", app.authorsHandler)

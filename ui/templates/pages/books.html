@@ -2,11 +2,17 @@
 
 {{define "main"}}
 {{if .ShowNews}}
-<a href="/news/mal-que-dura-cien-anos" class="mb-6 block rounded border border-gray-300 bg-white px-5 py-3 shadow-sm hover:border-gray-400">
-  <p class="text-xs text-gray-500">2024 · Anuncio</p>
-  <p class="text-sm font-semibold">La Pirateca en «Mal que dura cien años»</p>
-  <p class="text-sm text-gray-600">Nuestro texto aparece en la página 75 de esta compilación editada por Creative Commons México.</p>
-</a>
+<section class="mb-8 flex flex-col items-center gap-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm sm:flex-row sm:gap-8 sm:p-8">
+  <img src="/static/images/logo.png" alt="Pirateca — los libros no se roban, ¡se expropian!" class="w-36 shrink-0 sm:w-44">
+  <div class="flex-1 text-center sm:text-left">
+    <p class="text-gray-700">Biblioteca digital libre. Explora el catálogo, descarga en PDF o por torrent, y comparte.</p>
+    <a href="/news/mal-que-dura-cien-anos" class="mt-5 block rounded-xl border border-gray-200 bg-page px-4 py-3 transition-colors hover:border-brand">
+      <span class="text-xs text-gray-500">2024 · Anuncio</span>
+      <span class="mt-0.5 block font-semibold text-gray-800">La Pirateca en «Mal que dura cien años»</span>
+      <span class="block text-sm text-gray-600">Nuestro texto aparece en la página 75 de esta compilación editada por Creative Commons México.</span>
+    </a>
+  </div>
+</section>
 {{end}}
 <section>
   <div class="mb-4 flex flex-col gap-3 border-b border-gray-300 pb-4 md:flex-row md:items-end md:justify-between">
