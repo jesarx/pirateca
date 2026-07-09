@@ -1,0 +1,50 @@
+{{define "title"}}Dashboard{{end}}
+
+{{define "main"}}
+<section>
+  <h1 class="mb-4 text-2xl font-bold">Dashboard · Libros</h1>
+  {{template "dashnav" .}}
+  <form method="GET" action="/dashboard/books" class="mb-4 flex gap-2">
+    <input type="search" name="title" value="{{.Filters.Search}}" placeholder="Buscar por título…"
+      class="rounded border border-stone-300 bg-white px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
+    <button type="submit" class="rounded border border-stone-400 px-3 py-1.5 text-sm hover:border-red-700 hover:text-red-700">Buscar</button>
+  </form>
+
+  {{if .Books}}
+  <div class="overflow-x-auto rounded border border-stone-300 bg-white">
+    <table class="w-full text-sm">
+      <thead class="border-b border-stone-300 bg-stone-50 text-left">
+        <tr>
+          <th class="px-3 py-2">Título</th>
+          <th class="px-3 py-2">Autor</th>
+          <th class="px-3 py-2">Año</th>
+          <th class="px-3 py-2">Editorial</th>
+          <th class="px-3 py-2"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-stone-200">
+        {{range .Books}}
+        <tr>
+          <td class="px-3 py-2"><a href="/books/{{.Slug}}" class="hover:text-red-700 hover:underline">{{.Title}}</a></td>
+          <td class="px-3 py-2">{{.AuthorFullName}}</td>
+          <td class="px-3 py-2">{{if .Year}}{{.Year}}{{end}}</td>
+          <td class="px-3 py-2">{{.PublisherName}}</td>
+          <td class="px-3 py-2 text-right whitespace-nowrap">
+            <a href="/dashboard/books/{{.ID}}/edit" class="text-red-700 hover:underline">Editar</a>
+            <form method="POST" action="/dashboard/books/{{.ID}}/delete" class="inline"
+              onsubmit="return confirm('¿Borrar “{{.Title}}” y todos sus archivos (PDF, portada, torrent)?')">
+              <button type="submit" class="ml-2 cursor-pointer text-stone-500 hover:text-red-700 hover:underline">Borrar</button>
+            </form>
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{else}}
+  <p class="py-12 text-center text-stone-500">No se encontraron libros.</p>
+  {{end}}
+
+  {{template "pagination" .}}
+</section>
+{{end}}

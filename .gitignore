@@ -1,5 +1,5 @@
 config.yaml
-.git
+.env
 uploads/pdfs/*
 uploads/covers/*
 uploads/epubs/*
