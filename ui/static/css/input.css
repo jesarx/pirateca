@@ -1,3 +1,32 @@
 @import "tailwindcss";
 
 @source "../../templates";
+
+/* Tipografía del sitio viejo (Geist, auto-hospedada, variable) */
+@font-face {
+  font-family: "Geist";
+  src: url("../fonts/GeistVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("../fonts/GeistMonoVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* Paleta heredada de qumran-web:
+     - page: el fondo con tinte rosado (--background del tema viejo)
+     - brand: el coral de la sidebar vieja (--sidebar) */
+  --color-page: oklch(97.1% 0.013 17.38);
+  --color-brand: oklch(70.4% 0.191 22.2);
+  --color-brand-dark: oklch(60% 0.175 22.2);
+}

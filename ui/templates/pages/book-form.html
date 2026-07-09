@@ -11,59 +11,59 @@
 
   <form method="POST" enctype="multipart/form-data"
     action="{{if $f.ID}}/dashboard/books/{{$f.ID}}/edit{{else}}/dashboard/books/new{{end}}"
-    class="space-y-4 rounded border border-stone-300 bg-white p-6 shadow-sm">
+    class="space-y-4 rounded border border-gray-300 bg-white p-6 shadow-sm">
 
     <div class="flex items-end gap-2">
       <div class="flex-1">
         <label for="isbn" class="mb-1 block text-sm font-semibold">ISBN</label>
         <input type="text" name="isbn" id="isbn" value="{{$f.ISBN}}"
-          class="w-full rounded border border-stone-300 px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
+          class="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-gray-500 focus:outline-none">
       </div>
       <button type="button" id="isbn-lookup"
-        class="cursor-pointer rounded border border-stone-400 px-3 py-1.5 text-sm hover:border-red-700 hover:text-red-700">
+        class="cursor-pointer rounded border border-gray-400 px-3 py-1.5 text-sm hover:border-gray-400 hover:text-blue-600">
         Autollenar por ISBN
       </button>
     </div>
-    <p id="isbn-status" class="hidden text-sm text-stone-500"></p>
+    <p id="isbn-status" class="hidden text-sm text-gray-500"></p>
 
     <div>
       <label for="title" class="mb-1 block text-sm font-semibold">Título *</label>
       <input type="text" name="title" id="title" value="{{$f.Title}}" required
-        class="w-full rounded border border-stone-300 px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
-      {{with index $f.Errors "title"}}<p class="mt-1 text-xs text-red-700">{{.}}</p>{{end}}
+        class="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-gray-500 focus:outline-none">
+      {{with index $f.Errors "title"}}<p class="mt-1 text-xs text-red-600">{{.}}</p>{{end}}
     </div>
 
     <div>
       <label for="short_title" class="mb-1 block text-sm font-semibold">Título corto *
-        <span class="font-normal text-stone-500">(define el nombre de archivo{{if $f.ID}} — cambiarlo aquí NO renombra los archivos ya publicados{{end}})</span>
+        <span class="font-normal text-gray-500">(define el nombre de archivo{{if $f.ID}} — cambiarlo aquí NO renombra los archivos ya publicados{{end}})</span>
       </label>
       <input type="text" name="short_title" id="short_title" value="{{$f.ShortTitle}}" required
-        class="w-full rounded border border-stone-300 px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
-      {{with index $f.Errors "short_title"}}<p class="mt-1 text-xs text-red-700">{{.}}</p>{{end}}
+        class="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-gray-500 focus:outline-none">
+      {{with index $f.Errors "short_title"}}<p class="mt-1 text-xs text-red-600">{{.}}</p>{{end}}
     </div>
 
     <div class="grid grid-cols-2 gap-4">
       <div>
         <label for="author_name" class="mb-1 block text-sm font-semibold">Nombre del autor</label>
         <input type="text" name="author_name" id="author_name" value="{{$f.AuthorName}}"
-          class="w-full rounded border border-stone-300 px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
+          class="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-gray-500 focus:outline-none">
       </div>
       <div>
         <label for="author_last_name" class="mb-1 block text-sm font-semibold">Apellido del autor *</label>
         <input type="text" name="author_last_name" id="author_last_name" value="{{$f.AuthorLastName}}" required
-          class="w-full rounded border border-stone-300 px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
-        {{with index $f.Errors "author_last_name"}}<p class="mt-1 text-xs text-red-700">{{.}}</p>{{end}}
+          class="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-gray-500 focus:outline-none">
+        {{with index $f.Errors "author_last_name"}}<p class="mt-1 text-xs text-red-600">{{.}}</p>{{end}}
       </div>
       <div>
         <label for="author2_name" class="mb-1 block text-sm font-semibold">Nombre del 2º autor</label>
         <input type="text" name="author2_name" id="author2_name" value="{{$f.Author2Name}}"
-          class="w-full rounded border border-stone-300 px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
+          class="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-gray-500 focus:outline-none">
       </div>
       <div>
         <label for="author2_last_name" class="mb-1 block text-sm font-semibold">Apellido del 2º autor</label>
         <input type="text" name="author2_last_name" id="author2_last_name" value="{{$f.Author2LastNm}}"
-          class="w-full rounded border border-stone-300 px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
-        {{with index $f.Errors "author2_last_name"}}<p class="mt-1 text-xs text-red-700">{{.}}</p>{{end}}
+          class="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-gray-500 focus:outline-none">
+        {{with index $f.Errors "author2_last_name"}}<p class="mt-1 text-xs text-red-600">{{.}}</p>{{end}}
       </div>
     </div>
 
@@ -71,75 +71,75 @@
       <div>
         <label for="publisher_name" class="mb-1 block text-sm font-semibold">Editorial *</label>
         <input type="text" name="publisher_name" id="publisher_name" value="{{$f.PublisherName}}" required
-          class="w-full rounded border border-stone-300 px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
-        {{with index $f.Errors "publisher_name"}}<p class="mt-1 text-xs text-red-700">{{.}}</p>{{end}}
+          class="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-gray-500 focus:outline-none">
+        {{with index $f.Errors "publisher_name"}}<p class="mt-1 text-xs text-red-600">{{.}}</p>{{end}}
       </div>
       <div>
         <label for="year" class="mb-1 block text-sm font-semibold">Año *</label>
         <input type="number" name="year" id="year" value="{{if $f.Year}}{{$f.Year}}{{end}}" required
-          class="w-full rounded border border-stone-300 px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
-        {{with index $f.Errors "year"}}<p class="mt-1 text-xs text-red-700">{{.}}</p>{{end}}
+          class="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-gray-500 focus:outline-none">
+        {{with index $f.Errors "year"}}<p class="mt-1 text-xs text-red-600">{{.}}</p>{{end}}
       </div>
     </div>
 
     <div>
-      <label for="tags" class="mb-1 block text-sm font-semibold">Etiquetas * <span class="font-normal text-stone-500">(separadas por coma, 1 a 5)</span></label>
+      <label for="tags" class="mb-1 block text-sm font-semibold">Etiquetas * <span class="font-normal text-gray-500">(separadas por coma, 1 a 5)</span></label>
       <input type="text" name="tags" id="tags" value="{{$f.TagsRaw}}" required placeholder="filosofía, historia"
-        class="w-full rounded border border-stone-300 px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
-      {{with index $f.Errors "tags"}}<p class="mt-1 text-xs text-red-700">{{.}}</p>{{end}}
+        class="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-gray-500 focus:outline-none">
+      {{with index $f.Errors "tags"}}<p class="mt-1 text-xs text-red-600">{{.}}</p>{{end}}
     </div>
 
     <div>
       <label for="description" class="mb-1 block text-sm font-semibold">Descripción</label>
       <textarea name="description" id="description" rows="5"
-        class="w-full rounded border border-stone-300 px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">{{$f.Description}}</textarea>
+        class="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-gray-500 focus:outline-none">{{$f.Description}}</textarea>
     </div>
 
     <div class="grid grid-cols-2 gap-4">
       <div>
         <label for="pages" class="mb-1 block text-sm font-semibold">Páginas</label>
         <input type="number" name="pages" id="pages" value="{{if $f.Pages}}{{$f.Pages}}{{end}}"
-          class="w-full rounded border border-stone-300 px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
+          class="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-gray-500 focus:outline-none">
       </div>
       <div>
         <label for="external_link" class="mb-1 block text-sm font-semibold">Liga externa</label>
         <input type="url" name="external_link" id="external_link" value="{{$f.ExternalLink}}"
-          class="w-full rounded border border-stone-300 px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
+          class="w-full rounded border border-gray-300 px-3 py-1.5 text-sm focus:border-gray-500 focus:outline-none">
       </div>
     </div>
 
     <label class="flex items-center gap-2 text-sm">
-      <input type="checkbox" name="dir_dwl" {{if $f.DirDwl}}checked{{end}} class="h-4 w-4 accent-red-700">
+      <input type="checkbox" name="dir_dwl" {{if $f.DirDwl}}checked{{end}} class="h-4 w-4 accent-gray-900">
       Permitir descarga directa del PDF
     </label>
 
-    <div class="space-y-4 border-t border-stone-200 pt-4">
+    <div class="space-y-4 border-t border-gray-200 pt-4">
       {{if $f.ID}}
-      <p class="text-sm text-stone-600">
-        Archivos publicados con nombre base <code class="rounded bg-stone-100 px-1">{{$f.Filename}}</code>.
+      <p class="text-sm text-gray-600">
+        Archivos publicados con nombre base <code class="rounded bg-gray-100 px-1">{{$f.Filename}}</code>.
         El PDF y su torrent no se pueden reemplazar (el torrent ya circula); solo la portada.
       </p>
       {{else}}
       <div>
         <label for="pdf" class="mb-1 block text-sm font-semibold">PDF
-          <span class="font-normal text-stone-500">(se limpian metadatos y se genera torrent automáticamente)</span>
+          <span class="font-normal text-gray-500">(se limpian metadatos y se genera torrent automáticamente)</span>
         </label>
         <input type="file" name="pdf" id="pdf" accept=".pdf" class="w-full text-sm">
       </div>
       {{end}}
       <div>
         <label for="image" class="mb-1 block text-sm font-semibold">{{if $f.ID}}Reemplazar portada{{else}}Portada{{end}}
-          <span class="font-normal text-stone-500">(se convierte a JPG si hace falta)</span>
+          <span class="font-normal text-gray-500">(se convierte a JPG si hace falta)</span>
         </label>
         <input type="file" name="image" id="image" accept=".jpg,.jpeg,.png,.gif,.webp" class="w-full text-sm">
       </div>
     </div>
 
-    <div class="flex gap-2 border-t border-stone-200 pt-4">
-      <button type="submit" class="rounded bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800">
+    <div class="flex gap-2 border-t border-gray-200 pt-4">
+      <button type="submit" class="rounded bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700">
         {{if $f.ID}}Guardar cambios{{else}}Crear libro{{end}}
       </button>
-      <a href="/dashboard" class="rounded border border-stone-400 px-4 py-2 text-sm hover:border-red-700 hover:text-red-700">Cancelar</a>
+      <a href="/dashboard" class="rounded border border-gray-400 px-4 py-2 text-sm hover:border-gray-400 hover:text-blue-600">Cancelar</a>
     </div>
   </form>
 </section>

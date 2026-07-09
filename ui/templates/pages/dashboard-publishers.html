@@ -7,24 +7,24 @@
   <div class="mb-4">
     <form method="GET" action="/dashboard/publishers" class="flex gap-2">
       <input type="search" name="name" value="{{.Search}}" placeholder="Buscar editorial…"
-        class="rounded border border-stone-300 bg-white px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
-      <button type="submit" class="rounded border border-stone-400 px-3 py-1.5 text-sm hover:border-red-700 hover:text-red-700">Buscar</button>
+        class="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm focus:border-gray-500 focus:outline-none">
+      <button type="submit" class="rounded border border-gray-400 px-3 py-1.5 text-sm hover:border-gray-400 hover:text-blue-600">Buscar</button>
     </form>
   </div>
 
   {{if .Publishers}}
-  <ul class="divide-y divide-stone-200 rounded border border-stone-300 bg-white">
+  <ul class="divide-y divide-gray-200 rounded border border-gray-300 bg-white">
     {{range .Publishers}}
     <li class="flex items-center justify-between gap-4 px-4 py-2.5 text-sm">
       <span><span class="font-semibold">{{.Name}}</span>
-        <span class="text-stone-500">— {{.Books}} {{if eq .Books 1}}libro{{else}}libros{{end}}</span>
+        <span class="text-gray-500">— {{.Books}} {{if eq .Books 1}}libro{{else}}libros{{end}}</span>
       </span>
       <span class="shrink-0 whitespace-nowrap">
-        <a href="/dashboard/publishers/{{.ID}}/edit" class="text-red-700 hover:underline">Editar</a>
+        <a href="/dashboard/publishers/{{.ID}}/edit" class="text-blue-600 hover:underline">Editar</a>
         {{if eq .Books 0}}
         <form method="POST" action="/dashboard/publishers/{{.ID}}/delete" class="inline"
           onsubmit="return confirm('¿Borrar {{.Name}}?')">
-          <button type="submit" class="ml-2 cursor-pointer text-stone-500 hover:text-red-700 hover:underline">Borrar</button>
+          <button type="submit" class="ml-2 cursor-pointer text-gray-500 hover:text-blue-600 hover:underline">Borrar</button>
         </form>
         {{end}}
       </span>
@@ -32,7 +32,7 @@
     {{end}}
   </ul>
   {{else}}
-  <p class="py-12 text-center text-stone-500">No se encontraron editoriales.</p>
+  <p class="py-12 text-center text-gray-500">No se encontraron editoriales.</p>
   {{end}}
 
   {{template "pagination" .}}

@@ -2,47 +2,47 @@
 
 {{define "main"}}
 {{with .Book}}
-<article class="rounded border border-stone-300 bg-white p-6 shadow-sm md:flex md:gap-8">
+<article class="rounded border border-gray-300 bg-white p-6 shadow-sm md:flex md:gap-8">
   <div class="mx-auto mb-6 w-56 shrink-0 md:mb-0">
     {{if .Filename}}
     <img src="/images?file={{.Filename}}.jpg" alt="Portada de {{.Title}}" class="w-full rounded shadow">
     {{else}}
-    <div class="flex aspect-[2/3] w-full items-center justify-center rounded bg-stone-200 px-2 text-center text-stone-500">{{.ShortTitle}}</div>
+    <div class="flex aspect-[2/3] w-full items-center justify-center rounded bg-gray-200 px-2 text-center text-gray-500">{{.ShortTitle}}</div>
     {{end}}
   </div>
 
   <div class="flex flex-1 flex-col">
     <h1 class="text-2xl font-bold">{{.Title}}</h1>
-    <p class="mt-1 text-stone-600">
-      de <a href="/authors/{{.AuthorSlug}}" class="font-semibold text-red-700 hover:underline">{{.AuthorFullName}}</a>
-      {{if .Author2Slug}} | <a href="/authors/{{.Author2Slug}}" class="font-semibold text-red-700 hover:underline">{{.Author2FullName}}</a>{{end}}
+    <p class="mt-1 text-gray-600">
+      de <a href="/authors/{{.AuthorSlug}}" class="font-semibold text-blue-600 hover:underline">{{.AuthorFullName}}</a>
+      {{if .Author2Slug}} | <a href="/authors/{{.Author2Slug}}" class="font-semibold text-blue-600 hover:underline">{{.Author2FullName}}</a>{{end}}
     </p>
 
     {{with .Description}}
-    <p class="mt-4 whitespace-pre-line text-sm leading-relaxed text-stone-700">{{.}}</p>
+    <p class="mt-4 whitespace-pre-line text-sm leading-relaxed text-gray-700">{{.}}</p>
     {{end}}
 
     <dl class="mt-6 grid grid-cols-2 gap-4 text-sm">
       <div>
-        <dt class="text-stone-500">Editorial</dt>
-        <dd><a href="/publishers/{{.PublisherSlug}}" class="text-red-700 hover:underline">{{.PublisherName}}</a></dd>
+        <dt class="text-gray-500">Editorial</dt>
+        <dd><a href="/publishers/{{.PublisherSlug}}" class="text-blue-600 hover:underline">{{.PublisherName}}</a></dd>
       </div>
       <div>
-        <dt class="text-stone-500">Año</dt>
+        <dt class="text-gray-500">Año</dt>
         <dd>{{if .Year}}{{.Year}}{{else}}—{{end}}</dd>
       </div>
       <div>
-        <dt class="text-stone-500">Páginas</dt>
+        <dt class="text-gray-500">Páginas</dt>
         <dd>{{if .Pages}}{{.Pages}}{{else}}—{{end}}</dd>
       </div>
       <div>
-        <dt class="text-stone-500">ISBN</dt>
+        <dt class="text-gray-500">ISBN</dt>
         <dd class="font-mono text-xs">{{if .ISBN}}{{.ISBN}}{{else}}—{{end}}</dd>
       </div>
       <div class="col-span-2">
-        <dt class="text-stone-500">Etiquetas</dt>
+        <dt class="text-gray-500">Etiquetas</dt>
         <dd>
-          {{range $i, $tag := .Tags}}{{if $i}}, {{end}}<a href="/books?tags={{$tag}}" class="text-red-700 hover:underline">{{$tag}}</a>{{end}}
+          {{range $i, $tag := .Tags}}{{if $i}}, {{end}}<a href="/books?tags={{$tag}}" class="text-blue-600 hover:underline">{{$tag}}</a>{{end}}
         </dd>
       </div>
     </dl>
@@ -50,25 +50,25 @@
     <div class="mt-8 grid gap-3 sm:grid-cols-2">
       {{if and .DirDwl .Filename}}
       <a href="/pdfs?file={{.Filename}}.pdf"
-        class="rounded bg-red-700 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-red-800">
+        class="rounded bg-gray-900 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-gray-700">
         ⬇ Descarga directa (PDF)
       </a>
       {{end}}
       {{if .Filename}}
       <a href="/torrs?file={{.Filename}}.pdf.torrent"
-        class="rounded bg-stone-800 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-stone-900">
+        class="rounded bg-gray-800 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-gray-900">
         ⬇ Descargar torrent
       </a>
       {{end}}
       {{if .ExternalLink}}
       <a href="{{.ExternalLink}}" target="_blank" rel="noopener noreferrer"
-        class="rounded border border-stone-400 px-4 py-2.5 text-center text-sm font-semibold text-stone-700 hover:border-red-700 hover:text-red-700">
+        class="rounded border border-gray-400 px-4 py-2.5 text-center text-sm font-semibold text-gray-700 hover:border-gray-400 hover:text-blue-600">
         ↗ Liga externa
       </a>
       {{end}}
       <button type="button"
         onclick="navigator.clipboard.writeText(location.href).then(() => { this.textContent = '✓ Enlace copiado'; })"
-        class="cursor-pointer rounded border border-stone-400 px-4 py-2.5 text-sm font-semibold text-stone-700 hover:border-red-700 hover:text-red-700">
+        class="cursor-pointer rounded border border-gray-400 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-gray-400 hover:text-blue-600">
         ⧉ Copiar enlace
       </button>
     </div>
