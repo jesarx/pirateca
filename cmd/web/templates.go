@@ -8,12 +8,18 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/jesarx/pirateca/internal/store"
 	"github.com/jesarx/pirateca/ui"
 )
 
 type templateData struct {
 	CurrentYear int
 	CurrentPath string
+	Books       []store.Book
+	Metadata    store.Metadata
+	Filters     store.BookFilters
+	SortOptions []sortOption
+	Pagination  []pageLink
 }
 
 func (app *application) newTemplateData(r *http.Request) templateData {

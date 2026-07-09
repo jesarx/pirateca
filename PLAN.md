@@ -33,8 +33,12 @@ actualiza al terminar.
   servidor con logging/recover/security headers, cache de plantillas
   embebidas (`embed`), layout base + nav + footer con Tailwind, Makefile,
   este plan.
-- [ ] **Fase 1 — Núcleo de datos**: `internal/store` contra el esquema
-  Postgres existente; listado público `/books` con paginación.
+- [x] **Fase 1 — Núcleo de datos**: `internal/store` contra el esquema
+  Postgres existente; listado público `/books` con búsqueda, filtros por
+  tag/autor/editorial, ordenamiento y paginación. Adelantado de otras
+  fases: `GetBookBySlug` (para Fase 2) y el servido de portadas
+  `/images?file=` (para que el listado tenga imágenes). Verificado contra
+  un Postgres 16 local con las migraciones reales y datos de prueba.
 - [ ] **Fase 2 — Catálogo completo**: detalle `/books/{slug}`, autores,
   editoriales, categorías, búsqueda y ordenamiento (query params, como el
   sitio actual).
@@ -45,9 +49,21 @@ actualiza al terminar.
   `users` existente), dashboard CRUD de libros/autores/editoriales,
   subida de archivos, protección CSRF.
 - [ ] **Fase 5 — Pulido y deploy**: páginas estáticas (manifiesto,
-  contacto, noticias), pendientes del frontend viejo, systemd unit,
-  instrucciones de deploy en VPS detrás de Caddy/nginx, redirects si
-  hiciera falta.
+  contacto, noticias), pendientes del frontend viejo, deploy en el VPS:
+  **nginx** como reverse proxy y unit de systemd llamado **`pirateca`**
+  (decisión del usuario), redirects si hiciera falta.
+
+## Notas / hallazgos
+
+- El índice `books_title_idx` (migración 3) usa `to_tsvector('simple',
+  title)` pero la búsqueda usa `'spanish'` + `unaccent`, así que ese
+  índice no se aprovecha. Irrelevante a esta escala; si algún día molesta,
+  crear índice con wrapper IMMUTABLE de unaccent.
+- El esquema de la base **no se modifica** (decisión de Fase 1): tags como
+  `text[]` con GIN, slugs por trigger y las FK actuales funcionan bien.
+- Para probar en local: Postgres + `CREATE EXTENSION citext; CREATE
+  EXTENSION unaccent;`, correr `migrations/*.up.sql` en orden (algunos
+  archivos no terminan en `;` — agregarlo al concatenar), sembrar datos.
 
 ## Cómo retomar el trabajo en una sesión nueva
 

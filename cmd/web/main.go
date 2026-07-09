@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/jesarx/pirateca/internal/store"
 	_ "github.com/lib/pq"
 )
 
@@ -25,6 +26,7 @@ type application struct {
 	config    config
 	logger    *slog.Logger
 	db        *sql.DB
+	store     *store.Store
 	templates map[string]*template.Template
 }
 
@@ -61,6 +63,7 @@ func main() {
 		}
 		defer db.Close()
 		app.db = db
+		app.store = store.New(db)
 		logger.Info("database connection pool established")
 	} else {
 		logger.Warn("no db-dsn provided, running without database")

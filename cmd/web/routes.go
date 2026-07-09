@@ -13,6 +13,8 @@ func (app *application) routes() http.Handler {
 
 	mux.HandleFunc("GET /health", app.healthHandler)
 	mux.HandleFunc("GET /{$}", app.homeHandler)
+	mux.HandleFunc("GET /books", app.booksHandler)
+	mux.HandleFunc("GET /images", app.serveCover)
 
 	return app.recoverPanic(app.logRequest(app.securityHeaders(mux)))
 }
