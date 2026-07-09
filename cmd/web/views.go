@@ -80,12 +80,14 @@ func barPct(value, max int64) float64 {
 }
 
 type dashData struct {
-	Catalog     store.CatalogStats
-	Visits      store.VisitStats
-	VisitBars   []chartBar
-	MonthBars   []chartBar
-	TagBars     []chartBar
-	LatestBooks []store.Book
+	Catalog      store.CatalogStats
+	Visits       store.VisitStats
+	Downloads    store.DownloadStats
+	TopDownloads []store.BookDownloads
+	VisitBars    []chartBar
+	MonthBars    []chartBar
+	TagBars      []chartBar
+	LatestBooks  []store.Book
 }
 
 var spanishMonths = [...]string{"ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"}
@@ -132,6 +134,29 @@ func buildMonthBars(months []store.MonthCount) []chartBar {
 		})
 	}
 	return bars
+}
+
+// buildTagCloud arma la nube de categorías: orden alfabético (como
+// vienen de ListTags) con Pct relativo al máximo para escalar el tamaño
+// tipográfico en la plantilla.
+func buildTagCloud(tags []store.Tag) []chartBar {
+	var max int64
+	for _, t := range tags {
+		if int64(t.Books) > max {
+			max = int64(t.Books)
+		}
+	}
+	cloud := make([]chartBar, 0, len(tags))
+	for _, t := range tags {
+		cloud = append(cloud, chartBar{
+			Label:   t.Name,
+			Value:   int64(t.Books),
+			Pct:     barPct(int64(t.Books), max),
+			Tooltip: fmt.Sprintf("%s: %d libros", t.Name, t.Books),
+			URL:     "/books?tags=" + url.QueryEscape(t.Name),
+		})
+	}
+	return cloud
 }
 
 func buildTagBars(tags []store.Tag, top int) []chartBar {

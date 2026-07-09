@@ -59,24 +59,26 @@ sudo chown pirateca:pirateca /opt/pirateca/pirateca
 
 ## 4. Migraciones de base de datos
 
-Solo hay que aplicar la 15 (corrige la rotación de slugs) y la 16 (tabla
-de visitas). La 14 es un no-op documental, pero es seguro correrla.
-`schema_migrations` del VPS está en 11 con cambios manuales aplicados;
-el último comando lo sincroniza a 16 por si algún día usas golang-migrate.
+Hay que aplicar la 15 (corrige la rotación de slugs), la 16 (tabla de
+visitas) y la 17 (tabla de descargas). La 14 es un no-op documental,
+pero es seguro correrla. `schema_migrations` del VPS está en 11 con
+cambios manuales aplicados; el último comando lo sincroniza a 17 por si
+algún día usas golang-migrate.
 
 ```sh
 cd /tmp/pirateca-src
 sudo -u postgres psql -d pirateca -f migrations/000014_sync_real_schema.up.sql
 sudo -u postgres psql -d pirateca -f migrations/000015_fix_slug_rotation.up.sql
 sudo -u postgres psql -d pirateca -f migrations/000016_create_visits.up.sql
-sudo -u postgres psql -d pirateca -c "UPDATE schema_migrations SET version = 16, dirty = false;"
+sudo -u postgres psql -d pirateca -f migrations/000017_create_downloads.up.sql
+sudo -u postgres psql -d pirateca -c "UPDATE schema_migrations SET version = 17, dirty = false;"
 ```
 
-Dale permisos al usuario de la app sobre la tabla nueva (usa el usuario
-de Postgres que tengas en el DSN):
+Dale permisos al usuario de la app sobre las tablas nuevas (usa el
+usuario de Postgres que tengas en el DSN):
 
 ```sh
-sudo -u postgres psql -d pirateca -c "GRANT ALL ON visits TO TU_USUARIO_DE_DB;"
+sudo -u postgres psql -d pirateca -c "GRANT ALL ON visits, downloads TO TU_USUARIO_DE_DB;"
 ```
 
 ## 5. Configuración

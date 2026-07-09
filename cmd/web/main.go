@@ -35,6 +35,7 @@ type application struct {
 	templates     map[string]*template.Template
 	sessionSecret []byte
 	visits        *visitCounter
+	downloads     *downloadCounter
 }
 
 func main() {
@@ -73,6 +74,7 @@ func main() {
 		templates:     templates,
 		sessionSecret: sessionSecret,
 		visits:        newVisitCounter(),
+		downloads:     newDownloadCounter(),
 	}
 
 	// El DSN es opcional durante el desarrollo del esqueleto; las páginas

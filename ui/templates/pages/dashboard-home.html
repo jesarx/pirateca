@@ -48,6 +48,27 @@
     </div>
   </div>
 
+  <!-- Tiles de descargas de PDF -->
+  <h2 class="mb-2 text-sm font-semibold uppercase tracking-wide text-gray-500">Descargas de PDF</h2>
+  <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div class="rounded border border-gray-300 bg-white p-4">
+      <p class="text-3xl font-bold">{{$d.Downloads.Today}}</p>
+      <p class="text-sm text-gray-500">Hoy</p>
+    </div>
+    <div class="rounded border border-gray-300 bg-white p-4">
+      <p class="text-3xl font-bold">{{$d.Downloads.Last7}}</p>
+      <p class="text-sm text-gray-500">Últimos 7 días</p>
+    </div>
+    <div class="rounded border border-gray-300 bg-white p-4">
+      <p class="text-3xl font-bold">{{$d.Downloads.Last30}}</p>
+      <p class="text-sm text-gray-500">Últimos 30 días</p>
+    </div>
+    <div class="rounded border border-gray-300 bg-white p-4">
+      <p class="text-3xl font-bold">{{$d.Downloads.Total}}</p>
+      <p class="text-sm text-gray-500">Total</p>
+    </div>
+  </div>
+
   <div class="mb-6 grid gap-4 lg:grid-cols-2">
     <!-- Visitas últimos 30 días -->
     <div class="rounded border border-gray-300 bg-white p-4">
@@ -85,7 +106,7 @@
     </div>
   </div>
 
-  <div class="grid gap-4 lg:grid-cols-2">
+  <div class="mb-6 grid gap-4 lg:grid-cols-2">
     <!-- Top categorías -->
     <div class="rounded border border-gray-300 bg-white p-4">
       <h3 class="mb-3 text-sm font-semibold">Categorías con más libros</h3>
@@ -104,21 +125,42 @@
       </ul>
     </div>
 
-    <!-- Últimos libros -->
+    <!-- Libros más descargados -->
     <div class="rounded border border-gray-300 bg-white p-4">
-      <h3 class="mb-3 text-sm font-semibold">Últimos libros agregados</h3>
-      <ul class="divide-y divide-gray-200">
-        {{range $d.LatestBooks}}
+      <h3 class="mb-3 text-sm font-semibold">Libros más descargados</h3>
+      {{if $d.TopDownloads}}
+      <ol class="divide-y divide-gray-200">
+        {{range $i, $bd := $d.TopDownloads}}
         <li class="flex items-center justify-between gap-3 py-2 text-sm">
           <span>
-            <a href="/books/{{.Slug}}" class="font-medium hover:text-blue-600 hover:underline">{{.Title}}</a>
-            <span class="text-gray-500"> — {{.AuthorFullName}}</span>
+            <span class="mr-1 font-mono text-xs text-gray-400">{{add $i 1}}.</span>
+            <a href="/books/{{$bd.Slug}}" class="font-medium hover:text-blue-600 hover:underline">{{$bd.Title}}</a>
+            <span class="text-gray-500"> — {{$bd.Author}}</span>
           </span>
-          <a href="/dashboard/books/{{.ID}}/edit" class="shrink-0 text-blue-600 hover:underline">Editar</a>
+          <span class="shrink-0 text-xs text-gray-500">{{$bd.Count}} {{if eq $bd.Count 1}}descarga{{else}}descargas{{end}}</span>
         </li>
         {{end}}
-      </ul>
+      </ol>
+      {{else}}
+      <p class="py-8 text-center text-sm text-gray-500">Aún no hay descargas registradas.</p>
+      {{end}}
     </div>
+  </div>
+
+  <!-- Últimos libros -->
+  <div class="rounded border border-gray-300 bg-white p-4">
+    <h3 class="mb-3 text-sm font-semibold">Últimos libros agregados</h3>
+    <ul class="divide-y divide-gray-200">
+      {{range $d.LatestBooks}}
+      <li class="flex items-center justify-between gap-3 py-2 text-sm">
+        <span>
+          <a href="/books/{{.Slug}}" class="font-medium hover:text-blue-600 hover:underline">{{.Title}}</a>
+          <span class="text-gray-500"> — {{.AuthorFullName}}</span>
+        </span>
+        <a href="/dashboard/books/{{.ID}}/edit" class="shrink-0 text-blue-600 hover:underline">Editar</a>
+      </li>
+      {{end}}
+    </ul>
   </div>
 </section>
 {{end}}
