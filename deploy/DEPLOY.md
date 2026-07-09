@@ -22,12 +22,27 @@ sudo useradd --system --home /opt/pirateca --shell /usr/sbin/nologin pirateca
 sudo mkdir -p /opt/pirateca/uploads/{covers,pdfs,epubs,torrents,torrentadded}
 ```
 
-Copia los archivos existentes del servicio viejo (ajusta el origen):
+Copia los archivos existentes del servicio viejo. El rsync NO borra el
+origen: los archivos quedan idénticos (fechas y permisos incluidos) en
+la ruta nueva, y el original intacto hasta la limpieza final. Se
+excluyen los scripts sueltos que vivían ahí (`convert_pdfs.sh`,
+`torrs.sh`), que ya no se usan:
 
 ```sh
-sudo rsync -a /ruta/del/viejo/uploads/ /opt/pirateca/uploads/
+sudo rsync -a --exclude='*.sh' /home/jesarx/qumran-api/uploads/ /opt/pirateca/uploads/
 sudo chown -R pirateca:pirateca /opt/pirateca
 ```
+
+(Es seguro re-ejecutarlo; solo copia lo que falte. `epubs/` no existe en
+el origen — queda la carpeta vacía recién creada, y no pasa nada.)
+
+**⚠ transmission**: el cliente de torrents siembra los PDFs desde las
+rutas viejas. Después de copiar, actualiza en su configuración el
+watch-dir a `/opt/pirateca/uploads/torrentadded` y el directorio de
+datos a `/opt/pirateca/uploads/pdfs` (en Transmission:
+`watch-dir` y `download-dir` en settings.json, o re-agrega los torrents
+apuntando a la ruta nueva y verifica los datos). Hazlo ANTES de borrar
+el uploads viejo, y comprueba que siga sembrando.
 
 ## 3. Compilar y colocar el binario
 
@@ -113,11 +128,26 @@ curl -sI https://pirateca.com/ | head -1             # 301 → /books
 Entra a https://pirateca.com/admin/login con tu email y contraseña de
 siempre (los de la tabla users). Sube un libro de prueba y bórralo.
 
-Cuando todo esté verificado, apaga y deshabilita los servicios viejos
-(la API de Go vieja y el Next.js con su Node), y borra sus directorios.
-El cliente de torrents debe seguir vigilando
-`/opt/pirateca/uploads/torrentadded/` (ajusta su watch-dir si cambió la
-ruta).
+Cuando todo esté verificado (catálogo, descargas, portadas, login,
+subir/borrar un libro de prueba, y transmission sembrando desde la ruta
+nueva), limpia el stack viejo:
+
+```sh
+# Servicios viejos (ajusta los nombres reales de tus units)
+sudo systemctl disable --now EL-SERVICIO-DE-LA-API-VIEJA
+sudo systemctl disable --now EL-SERVICIO-DE-NEXTJS
+sudo rm /etc/systemd/system/EL-SERVICIO-DE-LA-API-VIEJA.service \
+        /etc/systemd/system/EL-SERVICIO-DE-NEXTJS.service
+sudo systemctl daemon-reload
+
+# Sitios viejos de nginx
+sudo rm /etc/nginx/sites-enabled/EL-SITIO-VIEJO
+sudo nginx -t && sudo systemctl reload nginx
+
+# Directorios viejos (¡solo cuando confirmes que /opt/pirateca/uploads
+# tiene todo y transmission ya apunta ahí!)
+rm -rf ~/qumran-api ~/qumran-web
+```
 
 ## Actualizaciones futuras
 
