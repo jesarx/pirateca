@@ -92,12 +92,18 @@ func main() {
 	}
 
 	srv := &http.Server{
-		Addr:         cfg.addr,
-		Handler:      app.routes(),
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 5 * time.Minute, // descargas y subidas de PDFs grandes
-		IdleTimeout:  time.Minute,
-		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),
+		Addr:    cfg.addr,
+		Handler: app.routes(),
+		// ReadTimeout cubre la lectura del cuerpo completo: la subida de un
+		// PDF desde el dashboard es una lectura, así que debe ser generoso
+		// (un PDF de decenas de MB por una conexión de subida lenta tarda
+		// más de unos pocos segundos). ReadHeaderTimeout mantiene la
+		// protección anti-slowloris sobre los encabezados de toda petición.
+		ReadHeaderTimeout: 15 * time.Second,
+		ReadTimeout:       5 * time.Minute,
+		WriteTimeout:      5 * time.Minute, // descargas y subidas de PDFs grandes
+		IdleTimeout:       time.Minute,
+		ErrorLog:          slog.NewLogLogger(logger.Handler(), slog.LevelError),
 	}
 
 	// Apagado ordenado: en SIGINT/SIGTERM se drenan las conexiones y se

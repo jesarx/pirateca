@@ -19,9 +19,19 @@
   font-display: swap;
 }
 
+/* Geo: la tipografía del logotipo "pirateca.com" */
+@font-face {
+  font-family: "Geo";
+  src: url("../fonts/Geo-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-logo: "Geo", "Geist Mono", ui-monospace, monospace;
 
   /* Paleta heredada de qumran-web:
      - page: el fondo con tinte rosado (--background del tema viejo)

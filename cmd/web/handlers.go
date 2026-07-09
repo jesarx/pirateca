@@ -29,6 +29,10 @@ func (app *application) staticPage(page string) http.HandlerFunc {
 	}
 }
 
+func (app *application) notFoundHandler(w http.ResponseWriter, r *http.Request) {
+	app.notFound(w, r)
+}
+
 // authorBooksHandler y publisherBooksHandler reutilizan el listado de
 // libros fijando el filtro desde el path (/authors/{slug}), que es como
 // funcionaba el sitio viejo con ?authslug=.
