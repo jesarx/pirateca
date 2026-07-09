@@ -78,6 +78,16 @@ func (app *application) dashboardHomeHandler(w http.ResponseWriter, r *http.Requ
 		app.serverError(w, r, err)
 		return
 	}
+	downloads, err := app.store.GetDownloadStats(ctx)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	topDownloads, err := app.store.GetTopDownloads(ctx, 10)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 	months, err := app.store.GetBooksPerMonth(ctx)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -96,12 +106,14 @@ func (app *application) dashboardHomeHandler(w http.ResponseWriter, r *http.Requ
 
 	data := app.newTemplateData(r)
 	data.Dash = &dashData{
-		Catalog:     catalog,
-		Visits:      visits,
-		VisitBars:   buildVisitBars(visits.Daily),
-		MonthBars:   buildMonthBars(months),
-		TagBars:     buildTagBars(tags, 10),
-		LatestBooks: latest,
+		Catalog:      catalog,
+		Visits:       visits,
+		Downloads:    downloads,
+		TopDownloads: topDownloads,
+		VisitBars:    buildVisitBars(visits.Daily),
+		MonthBars:    buildMonthBars(months),
+		TagBars:      buildTagBars(tags, 10),
+		LatestBooks:  latest,
 	}
 	app.render(w, r, http.StatusOK, "dashboard-home.html", data)
 }

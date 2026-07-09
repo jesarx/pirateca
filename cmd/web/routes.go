@@ -10,6 +10,10 @@ func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.Handle("GET /static/", http.FileServerFS(ui.Files))
+	// Los navegadores piden /favicon.ico en la raíz por convención.
+	mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFileFS(w, r, ui.Files, "static/favicon.ico")
+	})
 
 	mux.HandleFunc("GET /health", app.healthHandler)
 	mux.HandleFunc("GET /{$}", app.homeHandler)

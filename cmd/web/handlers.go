@@ -198,6 +198,7 @@ func (app *application) tagsHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := app.newTemplateData(r)
 	data.Tags = tags
+	data.TagCloud = buildTagCloud(tags)
 	app.render(w, r, http.StatusOK, "tags.html", data)
 }
 

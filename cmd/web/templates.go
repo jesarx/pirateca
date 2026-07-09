@@ -30,6 +30,7 @@ type templateData struct {
 	Pagination      []pageLink
 	Dash            *dashData
 	ShowNews        bool
+	TagCloud        []chartBar
 }
 
 func (app *application) newTemplateData(r *http.Request) templateData {
@@ -38,6 +39,10 @@ func (app *application) newTemplateData(r *http.Request) templateData {
 		CurrentPath:     r.URL.Path,
 		IsAuthenticated: app.isAuthenticated(r),
 	}
+}
+
+var templateFuncs = template.FuncMap{
+	"add": func(a, b int) int { return a + b },
 }
 
 func newTemplateCache() (map[string]*template.Template, error) {
@@ -57,7 +62,7 @@ func newTemplateCache() (map[string]*template.Template, error) {
 			page,
 		}
 
-		ts, err := template.New(base).ParseFS(ui.Files, patterns...)
+		ts, err := template.New(base).Funcs(templateFuncs).ParseFS(ui.Files, patterns...)
 		if err != nil {
 			return nil, err
 		}

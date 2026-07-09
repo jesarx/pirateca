@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/jesarx/pirateca/internal/store"
 )
 
 // visitCounter acumula visitas en memoria y las vuelca a la base cada
@@ -40,20 +42,65 @@ func (vc *visitCounter) drain() map[time.Time]int64 {
 	return out
 }
 
+// downloadCounter acumula descargas de PDFs en memoria, por día y nombre
+// base de archivo, con el mismo esquema de flush que visitCounter.
+type downloadCounter struct {
+	mu     sync.Mutex
+	counts map[store.DayFile]int64
+}
+
+func newDownloadCounter() *downloadCounter {
+	return &downloadCounter{counts: map[store.DayFile]int64{}}
+}
+
+func (dc *downloadCounter) add(filename string) {
+	key := store.DayFile{
+		Day:      time.Now().UTC().Truncate(24 * time.Hour),
+		Filename: filename,
+	}
+	dc.mu.Lock()
+	dc.counts[key]++
+	dc.mu.Unlock()
+}
+
+func (dc *downloadCounter) drain() map[store.DayFile]int64 {
+	dc.mu.Lock()
+	defer dc.mu.Unlock()
+	if len(dc.counts) == 0 {
+		return nil
+	}
+	out := dc.counts
+	dc.counts = map[store.DayFile]int64{}
+	return out
+}
+
 func (app *application) flushVisits(ctx context.Context) {
-	counts := app.visits.drain()
-	if counts == nil || app.store == nil {
+	if app.store == nil {
 		return
 	}
-	if err := app.store.RecordVisits(ctx, counts); err != nil {
-		app.logger.Error("failed to flush visits", "error", err.Error())
-		// Devolver los conteos no volcados para reintentar en el
-		// siguiente flush.
-		app.visits.mu.Lock()
-		for day, n := range counts {
-			app.visits.counts[day] += n
+
+	if counts := app.visits.drain(); counts != nil {
+		if err := app.store.RecordVisits(ctx, counts); err != nil {
+			app.logger.Error("failed to flush visits", "error", err.Error())
+			// Devolver los conteos no volcados para reintentar en el
+			// siguiente flush.
+			app.visits.mu.Lock()
+			for day, n := range counts {
+				app.visits.counts[day] += n
+			}
+			app.visits.mu.Unlock()
 		}
-		app.visits.mu.Unlock()
+	}
+
+	if counts := app.downloads.drain(); counts != nil {
+		if err := app.store.RecordDownloads(ctx, counts); err != nil {
+			app.logger.Error("failed to flush downloads", "error", err.Error())
+			app.downloads.mu.Lock()
+			for key, n := range counts {
+				app.downloads.counts[key] += n
+			}
+			app.downloads.mu.Unlock()
+		}
 	}
 }
 
