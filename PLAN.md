@@ -47,15 +47,42 @@ actualiza al terminar.
 - [x] **Fase 3 — Archivos**: portadas y descargas PDF/EPUB/torrent con
   Content-Disposition (validación de extensión y path traversal portada
   del código viejo). La *subida* de archivos es parte de la Fase 4.
-- [ ] **Fase 4 — Admin**: login con sesión (cookie, bcrypt contra tabla
-  `users` existente), dashboard CRUD de libros/autores/editoriales,
-  subida de archivos, protección CSRF.
+- [x] **Fase 4 — Admin**: login con sesión (cookie HMAC firmada, bcrypt
+  contra la tabla `users` existente), dashboard CRUD de
+  libros/autores/editoriales, subida de archivos con el pipeline
+  delicado portado tal cual (ver notas), CSRF por chequeo de
+  Origin/Referer + SameSite=Lax, autollenado por ISBN vía OpenLibrary.
+  Verificado end-to-end con PDF/PNG reales contra la base real.
 - [ ] **Fase 5 — Pulido y deploy**: páginas estáticas (manifiesto,
   contacto, noticias), pendientes del frontend viejo, deploy en el VPS:
   **nginx** como reverse proxy y unit de systemd llamado **`pirateca`**
   (decisión del usuario), redirects si hiciera falta.
 
 ## Notas / hallazgos
+
+- **Pipeline de subida de PDF — EL ORDEN IMPORTA** (`cmd/web/process.go`):
+  guardar → `exiftool -all:all=` (limpiar metadatos) → `exiftool`
+  escribir Título/Autor/Editorial → `transmission-create` (el torrent
+  hashea el contenido; debe ir DESPUÉS de los metadatos) → copiar a
+  `uploads/torrentadded/` (carpeta vigilada por el cliente de torrents).
+  Portada: guardar (convertir a JPG con ImageMagick si hace falta) →
+  `exiftool -all:all=`. En edición el PDF es inmutable; solo la portada.
+  Requiere `exiftool`, `transmission-create` y `convert` en el sistema.
+- Mejoras sobre el flujo viejo: unicidad del filename verificada ANTES de
+  escribir archivos; validación de extensiones en la subida; limpieza de
+  archivos escritos si el INSERT falla; al borrar, primero la base y
+  luego los archivos.
+- **Bug corregido (migración 000015)**: los triggers de slug regeneraban
+  el slug en cada UPDATE chocando consigo mismos → cada edición añadía
+  -1, -2… y rompía enlaces (hay cicatrices en los datos reales, no se
+  tocaron). Ahora el slug solo se regenera si cambian los campos de los
+  que depende y el chequeo de unicidad excluye la propia fila. También se
+  corrigió que el slug de autores sin nombre (NULL) quedara NULL.
+  **Esta migración SÍ hay que correrla en el VPS** (a diferencia de la
+  000014 que es no-op): `psql -d pirateca -f
+  migrations/000015_fix_slug_rotation.up.sql` o vía golang-migrate.
+- El login de prueba local es test@pirateca.com / prueba123 (solo existe
+  en la base local del sandbox, no en el VPS).
 
 - **El esquema real del VPS difiere de las migraciones 1-13** (confirmado
   con el backup `pirateca_20260629.sql`): `books.year` y `books.tags` son

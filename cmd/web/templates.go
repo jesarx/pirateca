@@ -13,25 +13,28 @@ import (
 )
 
 type templateData struct {
-	CurrentYear int
-	CurrentPath string
-	Heading     string
-	Search      string
-	Books       []store.Book
-	Book        *store.Book
-	Authors     []store.Author
-	Publishers  []store.Publisher
-	Tags        []store.Tag
-	Metadata    store.Metadata
-	Filters     store.BookFilters
-	SortOptions []sortOption
-	Pagination  []pageLink
+	CurrentYear     int
+	CurrentPath     string
+	IsAuthenticated bool
+	Heading         string
+	Search          string
+	Form            any
+	Books           []store.Book
+	Book            *store.Book
+	Authors         []store.Author
+	Publishers      []store.Publisher
+	Tags            []store.Tag
+	Metadata        store.Metadata
+	Filters         store.BookFilters
+	SortOptions     []sortOption
+	Pagination      []pageLink
 }
 
 func (app *application) newTemplateData(r *http.Request) templateData {
 	return templateData{
-		CurrentYear: time.Now().Year(),
-		CurrentPath: r.URL.Path,
+		CurrentYear:     time.Now().Year(),
+		CurrentPath:     r.URL.Path,
+		IsAuthenticated: app.isAuthenticated(r),
 	}
 }
 

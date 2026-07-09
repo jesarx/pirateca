@@ -91,6 +91,109 @@ func (s *Store) ListAuthors(ctx context.Context, f AuthorFilters) ([]Author, Met
 	return authors, calculateMetadata(totalRecords, f.Page, f.PageSize), nil
 }
 
+// GetOrCreateAuthor busca por (name, last_name) — normalizando el nombre
+// vacío, que en la tabla puede ser NULL o ” — y crea el autor si no
+// existe. El slug lo genera el trigger authors_slug_trigger.
+func (s *Store) GetOrCreateAuthor(ctx context.Context, name, lastName string) (*Author, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	var a Author
+	err := s.db.QueryRowContext(ctx, `
+		SELECT id, COALESCE(name, ''), last_name, slug
+		FROM authors
+		WHERE COALESCE(name, '') = $1 AND last_name = $2`, name, lastName,
+	).Scan(&a.ID, &a.Name, &a.LastName, &a.Slug)
+	if err == nil {
+		return &a, nil
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+
+	err = s.db.QueryRowContext(ctx, `
+		INSERT INTO authors (name, last_name)
+		VALUES (NULLIF($1, ''), $2)
+		RETURNING id, COALESCE(name, ''), last_name, slug`, name, lastName,
+	).Scan(&a.ID, &a.Name, &a.LastName, &a.Slug)
+	if err != nil {
+		return nil, err
+	}
+	return &a, nil
+}
+
+func (s *Store) GetAuthorByID(ctx context.Context, id int64) (*Author, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	var a Author
+	err := s.db.QueryRowContext(ctx, `
+		SELECT id, COALESCE(name, ''), last_name, slug
+		FROM authors WHERE id = $1`, id,
+	).Scan(&a.ID, &a.Name, &a.LastName, &a.Slug)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return &a, nil
+}
+
+func (s *Store) UpdateAuthor(ctx context.Context, id int64, name, lastName string) error {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	// El trigger regenera el slug en cada UPDATE.
+	result, err := s.db.ExecContext(ctx, `
+		UPDATE authors SET name = NULLIF($1, ''), last_name = $2, version = version + 1
+		WHERE id = $3`, name, lastName, id)
+	if err != nil {
+		if isUniqueViolation(err) {
+			return ErrDuplicate
+		}
+		return err
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// DeleteAuthor solo borra autores sin libros asociados (como el API viejo).
+func (s *Store) DeleteAuthor(ctx context.Context, id int64) error {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	var books int
+	err := s.db.QueryRowContext(ctx,
+		`SELECT count(*) FROM books WHERE auth_id = $1 OR auth2_id = $1`, id,
+	).Scan(&books)
+	if err != nil {
+		return err
+	}
+	if books > 0 {
+		return ErrHasBooks
+	}
+
+	result, err := s.db.ExecContext(ctx, `DELETE FROM authors WHERE id = $1`, id)
+	if err != nil {
+		return err
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 func (s *Store) GetAuthorBySlug(ctx context.Context, slug string) (*Author, error) {
 	if slug == "" {
 		return nil, ErrNotFound

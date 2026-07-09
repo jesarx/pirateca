@@ -1,0 +1,26 @@
+{{define "title"}}Iniciar sesión{{end}}
+
+{{define "main"}}
+<section class="mx-auto max-w-sm">
+  <h1 class="mb-6 text-2xl font-bold">Iniciar sesión</h1>
+
+  {{with .Form}}{{with index . "Error"}}
+  <p class="mb-4 rounded border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800">{{.}}</p>
+  {{end}}{{end}}
+
+  <form method="POST" action="/admin/login" class="space-y-4 rounded border border-stone-300 bg-white p-6 shadow-sm">
+    <div>
+      <label for="email" class="mb-1 block text-sm font-semibold">Email</label>
+      <input type="email" name="email" id="email" required autofocus
+        value="{{with .Form}}{{index . "Email"}}{{end}}"
+        class="w-full rounded border border-stone-300 px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
+    </div>
+    <div>
+      <label for="password" class="mb-1 block text-sm font-semibold">Contraseña</label>
+      <input type="password" name="password" id="password" required
+        class="w-full rounded border border-stone-300 px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
+    </div>
+    <button type="submit" class="w-full rounded bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-800">Entrar</button>
+  </form>
+</section>
+{{end}}

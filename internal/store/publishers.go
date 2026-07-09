@@ -83,6 +83,100 @@ func (s *Store) ListPublishers(ctx context.Context, f PublisherFilters) ([]Publi
 	return publishers, calculateMetadata(totalRecords, f.Page, f.PageSize), nil
 }
 
+func (s *Store) GetOrCreatePublisher(ctx context.Context, name string) (*Publisher, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	var p Publisher
+	err := s.db.QueryRowContext(ctx, `
+		SELECT id, name, slug FROM publishers WHERE name = $1`, name,
+	).Scan(&p.ID, &p.Name, &p.Slug)
+	if err == nil {
+		return &p, nil
+	}
+	if !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
+
+	err = s.db.QueryRowContext(ctx, `
+		INSERT INTO publishers (name) VALUES ($1)
+		RETURNING id, name, slug`, name,
+	).Scan(&p.ID, &p.Name, &p.Slug)
+	if err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
+
+func (s *Store) GetPublisherByID(ctx context.Context, id int64) (*Publisher, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	var p Publisher
+	err := s.db.QueryRowContext(ctx, `
+		SELECT id, name, slug FROM publishers WHERE id = $1`, id,
+	).Scan(&p.ID, &p.Name, &p.Slug)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return &p, nil
+}
+
+func (s *Store) UpdatePublisher(ctx context.Context, id int64, name string) error {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	result, err := s.db.ExecContext(ctx, `
+		UPDATE publishers SET name = $1, version = version + 1
+		WHERE id = $2`, name, id)
+	if err != nil {
+		if isUniqueViolation(err) {
+			return ErrDuplicate
+		}
+		return err
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+func (s *Store) DeletePublisher(ctx context.Context, id int64) error {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	var books int
+	err := s.db.QueryRowContext(ctx,
+		`SELECT count(*) FROM books WHERE pub_id = $1`, id,
+	).Scan(&books)
+	if err != nil {
+		return err
+	}
+	if books > 0 {
+		return ErrHasBooks
+	}
+
+	result, err := s.db.ExecContext(ctx, `DELETE FROM publishers WHERE id = $1`, id)
+	if err != nil {
+		return err
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 func (s *Store) GetPublisherBySlug(ctx context.Context, slug string) (*Publisher, error) {
 	if slug == "" {
 		return nil, ErrNotFound

@@ -26,5 +26,26 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("GET /epubs", app.serveEpub)
 	mux.HandleFunc("GET /torrs", app.serveTorrent)
 
-	return app.recoverPanic(app.logRequest(app.securityHeaders(mux)))
+	mux.HandleFunc("GET /admin/login", app.loginFormHandler)
+	mux.HandleFunc("POST /admin/login", app.loginHandler)
+	mux.HandleFunc("POST /admin/logout", app.logoutHandler)
+
+	mux.HandleFunc("GET /dashboard", app.requireAuth(app.dashboardBooksHandler))
+	mux.HandleFunc("GET /dashboard/books/new", app.requireAuth(app.newBookFormHandler))
+	mux.HandleFunc("POST /dashboard/books/new", app.requireAuth(app.createBookHandler))
+	mux.HandleFunc("GET /dashboard/books/{id}/edit", app.requireAuth(app.editBookFormHandler))
+	mux.HandleFunc("POST /dashboard/books/{id}/edit", app.requireAuth(app.updateBookHandler))
+	mux.HandleFunc("POST /dashboard/books/{id}/delete", app.requireAuth(app.deleteBookHandler))
+
+	mux.HandleFunc("GET /dashboard/authors", app.requireAuth(app.dashboardAuthorsHandler))
+	mux.HandleFunc("GET /dashboard/authors/{id}/edit", app.requireAuth(app.editAuthorFormHandler))
+	mux.HandleFunc("POST /dashboard/authors/{id}/edit", app.requireAuth(app.updateAuthorHandler))
+	mux.HandleFunc("POST /dashboard/authors/{id}/delete", app.requireAuth(app.deleteAuthorHandler))
+
+	mux.HandleFunc("GET /dashboard/publishers", app.requireAuth(app.dashboardPublishersHandler))
+	mux.HandleFunc("GET /dashboard/publishers/{id}/edit", app.requireAuth(app.editPublisherFormHandler))
+	mux.HandleFunc("POST /dashboard/publishers/{id}/edit", app.requireAuth(app.updatePublisherHandler))
+	mux.HandleFunc("POST /dashboard/publishers/{id}/delete", app.requireAuth(app.deletePublisherHandler))
+
+	return app.recoverPanic(app.logRequest(app.securityHeaders(app.checkOrigin(mux))))
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"database/sql"
 	"flag"
 	"html/template"
@@ -19,15 +20,17 @@ type config struct {
 	db   struct {
 		dsn string
 	}
-	uploadsDir string
+	uploadsDir    string
+	sessionSecret string
 }
 
 type application struct {
-	config    config
-	logger    *slog.Logger
-	db        *sql.DB
-	store     *store.Store
-	templates map[string]*template.Template
+	config        config
+	logger        *slog.Logger
+	db            *sql.DB
+	store         *store.Store
+	templates     map[string]*template.Template
+	sessionSecret []byte
 }
 
 func main() {
@@ -37,9 +40,22 @@ func main() {
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|production)")
 	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("PIRATECA_DB_DSN"), "PostgreSQL DSN")
 	flag.StringVar(&cfg.uploadsDir, "uploads-dir", "./uploads", "Directory with covers, pdfs, epubs and torrents")
+	flag.StringVar(&cfg.sessionSecret, "session-secret", os.Getenv("PIRATECA_SESSION_SECRET"), "Secret for signing session cookies (min 32 chars)")
 	flag.Parse()
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
+	sessionSecret, err := decodeSessionSecret(cfg.sessionSecret)
+	if err != nil {
+		// Sin secret configurado se genera uno efímero: la app funciona,
+		// pero las sesiones de admin mueren con cada reinicio.
+		sessionSecret = make([]byte, 32)
+		if _, err := rand.Read(sessionSecret); err != nil {
+			logger.Error(err.Error())
+			os.Exit(1)
+		}
+		logger.Warn("no valid session secret configured, using ephemeral secret (admin sessions reset on restart)")
+	}
 
 	templates, err := newTemplateCache()
 	if err != nil {
@@ -48,9 +64,10 @@ func main() {
 	}
 
 	app := &application{
-		config:    cfg,
-		logger:    logger,
-		templates: templates,
+		config:        cfg,
+		logger:        logger,
+		templates:     templates,
+		sessionSecret: sessionSecret,
 	}
 
 	// El DSN es opcional durante el desarrollo del esqueleto; las páginas

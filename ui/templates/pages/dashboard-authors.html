@@ -1,0 +1,39 @@
+{{define "title"}}Dashboard · Autores{{end}}
+
+{{define "main"}}
+<section>
+  <div class="mb-4 flex flex-col gap-3 border-b border-stone-300 pb-4 md:flex-row md:items-end md:justify-between">
+    <h1 class="text-2xl font-bold">Dashboard · Autores</h1>
+    <form method="GET" action="/dashboard/authors" class="flex gap-2">
+      <input type="search" name="name" value="{{.Search}}" placeholder="Buscar autor…"
+        class="rounded border border-stone-300 bg-white px-3 py-1.5 text-sm focus:border-red-700 focus:outline-none">
+      <button type="submit" class="rounded border border-stone-400 px-3 py-1.5 text-sm hover:border-red-700 hover:text-red-700">Buscar</button>
+    </form>
+  </div>
+
+  {{if .Authors}}
+  <ul class="divide-y divide-stone-200 rounded border border-stone-300 bg-white">
+    {{range .Authors}}
+    <li class="flex items-center justify-between gap-4 px-4 py-2.5 text-sm">
+      <span><span class="font-semibold">{{.LastName}}</span>{{with .Name}}, {{.}}{{end}}
+        <span class="text-stone-500">— {{.Books}} {{if eq .Books 1}}libro{{else}}libros{{end}}</span>
+      </span>
+      <span class="shrink-0 whitespace-nowrap">
+        <a href="/dashboard/authors/{{.ID}}/edit" class="text-red-700 hover:underline">Editar</a>
+        {{if eq .Books 0}}
+        <form method="POST" action="/dashboard/authors/{{.ID}}/delete" class="inline"
+          onsubmit="return confirm('¿Borrar a {{.LastName}}?')">
+          <button type="submit" class="ml-2 cursor-pointer text-stone-500 hover:text-red-700 hover:underline">Borrar</button>
+        </form>
+        {{end}}
+      </span>
+    </li>
+    {{end}}
+  </ul>
+  {{else}}
+  <p class="py-12 text-center text-stone-500">No se encontraron autores.</p>
+  {{end}}
+
+  {{template "pagination" .}}
+</section>
+{{end}}
