@@ -35,6 +35,10 @@
         {{end}}
       </select>
       <button type="submit" class="rounded bg-gray-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-gray-700">Buscar</button>
+      <a href="{{.RandomURL}}" title="Mostrar el catálogo en orden aleatorio"
+        class="rounded border border-brand px-3 py-1.5 text-center text-sm font-semibold text-brand-dark hover:bg-brand hover:text-white">
+        🎲 {{if eq .Filters.Sort "random"}}Barajar otra vez{{else}}Sorpréndeme{{end}}
+      </a>
     </form>
   </div>
 

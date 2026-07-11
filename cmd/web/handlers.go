@@ -98,6 +98,7 @@ func (app *application) renderBookList(w http.ResponseWriter, r *http.Request, h
 	data.Filters = filters
 	data.SortOptions = bookSortOptions(filters.Sort)
 	data.Pagination = buildPagination(metadata, r.URL.Path, r.URL.Query())
+	data.RandomURL = randomURL(r)
 	if heading != "" {
 		data.MetaDescription = truncate(heading+" — descarga libre en PDF o torrent en Pirateca.", 158)
 	}
@@ -211,6 +212,20 @@ func (app *application) tagsHandler(w http.ResponseWriter, r *http.Request) {
 	data.Tags = tags
 	data.TagCloud = buildTagCloud(tags)
 	app.render(w, r, http.StatusOK, "tags.html", data)
+}
+
+// randomURL arma la URL del botón de orden aleatorio: conserva los
+// filtros activos (búsqueda, tag, etc.), fija sort=random y vuelve a la
+// primera página.
+func randomURL(r *http.Request) string {
+	v := url.Values{}
+	for key, vals := range r.URL.Query() {
+		if key != "page" && key != "sort" {
+			v[key] = vals
+		}
+	}
+	v.Set("sort", "random")
+	return r.URL.Path + "?" + v.Encode()
 }
 
 func bookFiltersFromQuery(qs url.Values) (f store.BookFilters) {
