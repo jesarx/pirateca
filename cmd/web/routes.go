@@ -9,11 +9,16 @@ import (
 func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 
-	mux.Handle("GET /static/", http.FileServerFS(ui.Files))
+	// Los estáticos van embebidos y el CSS lleva ?v= por deploy, así que
+	// una semana de caché es segura.
+	mux.Handle("GET /static/", cacheControl("public, max-age=604800", http.FileServerFS(ui.Files)))
 	// Los navegadores piden /favicon.ico en la raíz por convención.
-	mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("GET /favicon.ico", cacheControl("public, max-age=604800", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFileFS(w, r, ui.Files, "static/favicon.ico")
-	})
+	})))
+
+	mux.HandleFunc("GET /robots.txt", app.robotsHandler)
+	mux.HandleFunc("GET /sitemap.xml", app.sitemapHandler)
 
 	mux.HandleFunc("GET /health", app.healthHandler)
 	mux.HandleFunc("GET /{$}", app.homeHandler)

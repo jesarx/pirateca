@@ -1,5 +1,15 @@
 {{define "title"}}{{.Book.Title}}{{end}}
 
+{{define "og"}}
+  <meta property="og:type" content="book">
+  <meta property="og:title" content="{{.Book.Title}} — {{.Book.AuthorFullName}}">
+  <meta property="og:description" content="{{.MetaDescription}}">
+  <meta property="og:url" content="{{.BaseURL}}/books/{{.Book.Slug}}">
+  {{if .Book.Filename}}<meta property="og:image" content="{{.BaseURL}}/images?file={{.Book.Filename}}.jpg">{{end}}
+  <meta name="twitter:card" content="summary">
+  {{with .JSONLD}}<script type="application/ld+json">{{.}}</script>{{end}}
+{{end}}
+
 {{define "main"}}
 {{with .Book}}
 <article class="rounded border border-gray-300 bg-white p-6 shadow-sm md:flex md:gap-8">

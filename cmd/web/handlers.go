@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -97,6 +98,9 @@ func (app *application) renderBookList(w http.ResponseWriter, r *http.Request, h
 	data.Filters = filters
 	data.SortOptions = bookSortOptions(filters.Sort)
 	data.Pagination = buildPagination(metadata, r.URL.Path, r.URL.Query())
+	if heading != "" {
+		data.MetaDescription = truncate(heading+" — descarga libre en PDF o torrent en Pirateca.", 158)
+	}
 	// El anuncio solo aparece en la portada del catálogo, sin filtros.
 	data.ShowNews = r.URL.Path == "/books" && filters.Search == "" &&
 		len(filters.Tags) == 0 && filters.AuthorSlug == "" &&
@@ -123,6 +127,13 @@ func (app *application) bookDetailHandler(w http.ResponseWriter, r *http.Request
 
 	data := app.newTemplateData(r)
 	data.Book = book
+	if book.Description != "" {
+		data.MetaDescription = truncate(book.Description, 158)
+	} else {
+		data.MetaDescription = truncate(fmt.Sprintf("«%s» de %s (%s, %d). Descarga libre en PDF o torrent.",
+			book.Title, book.AuthorFullName(), book.PublisherName, book.Year), 158)
+	}
+	data.JSONLD = bookJSONLD(app.config.baseURL, book)
 	app.render(w, r, http.StatusOK, "book.html", data)
 }
 

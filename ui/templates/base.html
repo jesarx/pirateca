@@ -5,9 +5,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{template "title" .}} | Pirateca.com</title>
-  <meta name="description" content="Los libros no se roban, ¡se expropian!">
+  <meta name="description" content="{{with .MetaDescription}}{{.}}{{else}}Pirateca: biblioteca digital libre. Los libros no se roban, ¡se expropian!{{end}}">
+  <link rel="canonical" href="{{.BaseURL}}{{.CurrentPath}}">
+  <meta property="og:site_name" content="Pirateca">
+  <meta property="og:locale" content="es_MX">
+  {{block "og" .}}
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{template "title" .}} | Pirateca.com">
+  <meta property="og:description" content="{{with .MetaDescription}}{{.}}{{else}}Pirateca: biblioteca digital libre. Los libros no se roban, ¡se expropian!{{end}}">
+  <meta property="og:url" content="{{.BaseURL}}{{.CurrentPath}}">
+  <meta property="og:image" content="{{.BaseURL}}/static/images/logo.png">
+  {{end}}
   <link rel="icon" href="/static/favicon.ico">
-  <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="stylesheet" href="/static/css/app.css?v={{.CSSVersion}}">
 </head>
 <body class="flex min-h-full flex-col bg-page font-sans text-gray-800">
   {{template "nav" .}}

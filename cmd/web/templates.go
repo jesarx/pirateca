@@ -6,6 +6,8 @@ import (
 	"html/template"
 	"io/fs"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jesarx/pirateca/internal/store"
@@ -15,6 +17,10 @@ import (
 type templateData struct {
 	CurrentYear     int
 	CurrentPath     string
+	BaseURL         string
+	CSSVersion      string
+	MetaDescription string
+	JSONLD          template.JS
 	IsAuthenticated bool
 	Heading         string
 	Search          string
@@ -33,12 +39,27 @@ type templateData struct {
 	TagCloud        []chartBar
 }
 
+// cssVersion cambia en cada arranque del proceso: rompe el caché de los
+// navegadores tras cada deploy sin necesitar hashes de archivos.
+var cssVersion = strconv.FormatInt(time.Now().Unix(), 36)
+
 func (app *application) newTemplateData(r *http.Request) templateData {
 	return templateData{
 		CurrentYear:     time.Now().Year(),
 		CurrentPath:     r.URL.Path,
+		BaseURL:         app.config.baseURL,
+		CSSVersion:      cssVersion,
 		IsAuthenticated: app.isAuthenticated(r),
 	}
+}
+
+// truncate corta un texto a n runas para meta descriptions.
+func truncate(s string, n int) string {
+	runes := []rune(strings.TrimSpace(s))
+	if len(runes) <= n {
+		return string(runes)
+	}
+	return strings.TrimSpace(string(runes[:n-1])) + "…"
 }
 
 var templateFuncs = template.FuncMap{

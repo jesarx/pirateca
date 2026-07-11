@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -25,6 +26,7 @@ type config struct {
 	}
 	uploadsDir    string
 	sessionSecret string
+	baseURL       string
 }
 
 type application struct {
@@ -46,7 +48,13 @@ func main() {
 	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("PIRATECA_DB_DSN"), "PostgreSQL DSN")
 	flag.StringVar(&cfg.uploadsDir, "uploads-dir", "./uploads", "Directory with covers, pdfs, epubs and torrents")
 	flag.StringVar(&cfg.sessionSecret, "session-secret", os.Getenv("PIRATECA_SESSION_SECRET"), "Secret for signing session cookies (min 32 chars)")
+	baseURLDefault := os.Getenv("PIRATECA_BASE_URL")
+	if baseURLDefault == "" {
+		baseURLDefault = "https://pirateca.com"
+	}
+	flag.StringVar(&cfg.baseURL, "base-url", baseURLDefault, "Public base URL (for canonical links, sitemap and Open Graph)")
 	flag.Parse()
+	cfg.baseURL = strings.TrimRight(cfg.baseURL, "/")
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
