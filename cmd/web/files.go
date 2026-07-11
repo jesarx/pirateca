@@ -75,6 +75,9 @@ func (app *application) serveUpload(w http.ResponseWriter, r *http.Request, subd
 var imageExts = []string{".jpg", ".jpeg", ".png", ".gif", ".webp"}
 
 func (app *application) serveCover(w http.ResponseWriter, r *http.Request) {
+	// Las portadas casi nunca cambian (solo al reemplazarlas en el
+	// dashboard); un día de caché ahorra la mayoría de los hits.
+	w.Header().Set("Cache-Control", "public, max-age=86400")
 	app.serveUpload(w, r, "covers", imageExts, false, nil)
 }
 

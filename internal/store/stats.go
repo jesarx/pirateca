@@ -190,6 +190,39 @@ func (s *Store) GetTopDownloads(ctx context.Context, limit int) ([]BookDownloads
 	return top, rows.Err()
 }
 
+type SitemapEntry struct {
+	Path    string
+	LastMod time.Time
+}
+
+// GetSitemapEntries devuelve las rutas públicas de libros, autores y
+// editoriales para el sitemap.
+func (s *Store) GetSitemapEntries(ctx context.Context) ([]SitemapEntry, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT '/books/' || slug, created_at FROM books WHERE slug IS NOT NULL
+		UNION ALL
+		SELECT '/authors/' || slug, created_at FROM authors WHERE slug IS NOT NULL
+		UNION ALL
+		SELECT '/publishers/' || slug, created_at FROM publishers WHERE slug IS NOT NULL`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var entries []SitemapEntry
+	for rows.Next() {
+		var e SitemapEntry
+		if err := rows.Scan(&e.Path, &e.LastMod); err != nil {
+			return nil, err
+		}
+		entries = append(entries, e)
+	}
+	return entries, rows.Err()
+}
+
 // GetBooksPerMonth devuelve los libros agregados por mes en los últimos
 // 12 meses, incluyendo meses en cero.
 func (s *Store) GetBooksPerMonth(ctx context.Context) ([]MonthCount, error) {

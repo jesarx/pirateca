@@ -66,6 +66,17 @@ actualiza al terminar.
 
 ## Notas / hallazgos
 
+- **SEO/perf (post-lanzamiento)**: meta description por página, canonical,
+  Open Graph (+ og:image con la portada y JSON-LD schema.org/Book en el
+  detalle), robots.txt, sitemap.xml dinámico, Cache-Control en estáticos
+  (7 días, CSS versionado con ?v= por arranque) y portadas (1 día), gzip
+  en la config de nginx.
+- **Sembrado de torrents**: la cadena es app → torrentadded/ → watch-dir
+  de transmission → transmission busca el PDF en su download-dir. Si
+  download-dir no apunta a uploads/pdfs, los torrents quedan al 0% y
+  nadie puede descargar. Diagnóstico y reparación: `deploy/check-seeding.sh`
+  (correr en el VPS).
+
 - **Pipeline de subida de PDF — EL ORDEN IMPORTA** (`cmd/web/process.go`):
   guardar → `exiftool -all:all=` (limpiar metadatos) → `exiftool`
   escribir Título/Autor/Editorial → `transmission-create` (el torrent

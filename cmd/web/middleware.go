@@ -55,6 +55,13 @@ func (app *application) checkOrigin(next http.Handler) http.Handler {
 	})
 }
 
+func cacheControl(value string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", value)
+		next.ServeHTTP(w, r)
+	})
+}
+
 // requireAuth protege las rutas del dashboard.
 func (app *application) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
