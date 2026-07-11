@@ -24,6 +24,7 @@ type templateData struct {
 	IsAuthenticated bool
 	Heading         string
 	Search          string
+	RandomURL       string
 	Form            any
 	Books           []store.Book
 	Book            *store.Book
