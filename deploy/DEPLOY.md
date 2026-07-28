@@ -50,8 +50,8 @@ En el VPS (o compila en tu máquina con `GOOS=linux GOARCH=amd64 make build`
 y súbelo con scp):
 
 ```sh
-git clone https://github.com/jesarx/pirateca.git /tmp/pirateca-src
-cd /tmp/pirateca-src
+git clone https://github.com/jesarx/pirateca.git /opt/pirateca-src
+cd /opt/pirateca-src
 make tailwind && make build
 sudo cp bin/pirateca /opt/pirateca/pirateca
 sudo chown pirateca:pirateca /opt/pirateca/pirateca
@@ -66,7 +66,7 @@ cambios manuales aplicados; el último comando lo sincroniza a 17 por si
 algún día usas golang-migrate.
 
 ```sh
-cd /tmp/pirateca-src
+cd /opt/pirateca-src
 sudo -u postgres psql -d pirateca -f migrations/000014_sync_real_schema.up.sql
 sudo -u postgres psql -d pirateca -f migrations/000015_fix_slug_rotation.up.sql
 sudo -u postgres psql -d pirateca -f migrations/000016_create_visits.up.sql
@@ -153,10 +153,32 @@ rm -rf ~/qumran-api ~/qumran-web
 
 ## Actualizaciones futuras
 
+El clon vive en `/opt/pirateca-src` — **no en `/tmp`**, que el sistema
+limpia al reiniciar. Con el script:
+
 ```sh
-cd /tmp/pirateca-src && git pull
-make css && make build
+cd /opt/pirateca-src && sudo bash deploy/update.sh
+```
+
+Hace `git pull`, avisa si hay migraciones nuevas (y se detiene para que
+las apliques), recompila, reinicia el servicio y comprueba `/health`.
+
+A mano es lo mismo en cinco pasos:
+
+```sh
+cd /opt/pirateca-src && git pull
+make build                     # 'make css' va incluido
 sudo systemctl stop pirateca
 sudo cp bin/pirateca /opt/pirateca/pirateca
 sudo systemctl start pirateca
+```
+
+Si el clon se perdió (por ejemplo, porque estaba en `/tmp`), vuelve a
+clonarlo — no se pierde nada, el código fuente es desechable; los datos
+viven en Postgres y en `/opt/pirateca/uploads`:
+
+```sh
+sudo git clone https://github.com/jesarx/pirateca.git /opt/pirateca-src
+sudo chown -R "$USER" /opt/pirateca-src
+cd /opt/pirateca-src && make tailwind
 ```
