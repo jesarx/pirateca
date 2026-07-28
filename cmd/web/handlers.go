@@ -94,6 +94,7 @@ func (app *application) renderBookList(w http.ResponseWriter, r *http.Request, h
 	data := app.newTemplateData(r)
 	data.Heading = heading
 	data.Books = books
+	data.CoverSizes = app.coverSizesFor(books)
 	data.Metadata = metadata
 	data.Filters = filters
 	data.SortOptions = bookSortOptions(filters.Sort)
