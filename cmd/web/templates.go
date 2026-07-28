@@ -27,6 +27,7 @@ type templateData struct {
 	RandomURL       string
 	Form            any
 	Books           []store.Book
+	CoverSizes      map[string]coverSize
 	Book            *store.Book
 	Authors         []store.Author
 	Publishers      []store.Publisher

@@ -18,7 +18,7 @@
   <div class="mb-4 flex flex-col gap-3 border-b border-gray-300 pb-4 md:flex-row md:items-end md:justify-between">
     <h1 class="text-2xl font-bold">{{with .Heading}}{{.}}{{else}}Libros{{end}}</h1>
 
-    <form method="GET" action="{{.CurrentPath}}" class="flex flex-col gap-2 sm:flex-row sm:items-center">
+    <form method="GET" action="{{.CurrentPath}}" class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center md:justify-end">
       {{if eq .CurrentPath "/books"}}
       {{with .Filters.AuthorSlug}}<input type="hidden" name="authslug" value="{{.}}">{{end}}
       {{with .Filters.PublisherSlug}}<input type="hidden" name="pubslug" value="{{.}}">{{end}}
@@ -26,7 +26,7 @@
       {{if .Filters.Tags}}<input type="hidden" name="tags" value="{{index .Filters.Tags 0}}">{{end}}
       <input
         type="search" name="title" value="{{.Filters.Search}}" placeholder="Buscar por título…"
-        class="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm focus:border-gray-500 focus:outline-none"
+        class="min-w-0 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm focus:border-gray-500 focus:outline-none"
       >
       <select name="sort" onchange="this.form.submit()"
         class="rounded border border-gray-300 bg-white px-2 py-1.5 text-sm">
@@ -50,15 +50,22 @@
   {{end}}
 
   {{if .Books}}
-  <!-- Masonry con columnas CSS: cada card mide lo que mide su contenido,
-       así los títulos largos no estiran a toda la fila. -->
-  <div class="columns-2 gap-4 sm:columns-3 md:columns-4 lg:columns-5">
+  <!-- Masonry: cada card mide lo que mide su contenido, así los títulos
+       largos no estiran toda la fila. masonry.js reparte las cards en
+       orden de lectura (izquierda a derecha); sin JS queda el fallback
+       de CSS columns, que ordena por columnas. -->
+  <div data-masonry
+    data-masonry-fallback="columns-2 sm:columns-3 md:columns-4 lg:columns-5"
+    class="columns-2 gap-4 [--masonry-cols:2] sm:columns-3 sm:[--masonry-cols:3] md:columns-4 md:[--masonry-cols:4] lg:columns-5 lg:[--masonry-cols:5]">
+    {{$sizes := .CoverSizes}}
     {{range .Books}}
     <article class="mb-4 break-inside-avoid rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
       <a href="/books/{{.Slug}}" class="mb-3 block">
         {{if .Filename}}
+        {{$size := index $sizes .Filename}}
         <img src="/images?file={{.Filename}}.jpg" alt="Portada de {{.Title}}" loading="lazy"
-          class="w-full rounded-md bg-gray-100">
+          {{if $size.Width}}width="{{$size.Width}}" height="{{$size.Height}}"{{end}}
+          class="h-auto w-full rounded-md bg-gray-100">
         {{else}}
         <div class="flex aspect-[2/3] w-full items-center justify-center rounded-md bg-gray-100 px-2 text-center text-sm text-gray-500">{{.ShortTitle}}</div>
         {{end}}
@@ -76,6 +83,9 @@
     </article>
     {{end}}
   </div>
+  <!-- Sin defer y justo después del grid: reordena antes del primer
+       pintado, así no se ve el salto desde el fallback. -->
+  <script src="/static/js/masonry.js"></script>
   {{else}}
   <p class="py-12 text-center text-gray-500">No se encontraron libros.</p>
   {{end}}
