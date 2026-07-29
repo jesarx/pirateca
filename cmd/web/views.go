@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"time"
 
 	"github.com/jesarx/pirateca/internal/store"
 )
@@ -80,14 +81,74 @@ func barPct(value, max int64) float64 {
 }
 
 type dashData struct {
-	Catalog      store.CatalogStats
-	Visits       store.VisitStats
-	Downloads    store.DownloadStats
-	TopDownloads []store.BookDownloads
-	VisitBars    []chartBar
-	MonthBars    []chartBar
-	TagBars      []chartBar
-	LatestBooks  []store.Book
+	Catalog         store.CatalogStats
+	Visits          store.VisitStats
+	Downloads       store.DownloadStats
+	TopDownloads    []store.BookDownloads
+	ReferrerBars    []chartBar
+	RecentReferrers []referrerHitView
+	VisitBars       []chartBar
+	MonthBars       []chartBar
+	TagBars         []chartBar
+	LatestBooks     []store.Book
+}
+
+// referrerHitView es un enlace de entrada listo para mostrar.
+type referrerHitView struct {
+	Label string // nombre legible del sitio (Google, Reddit…)
+	URL   string // enlace completo desde el que llegaron
+	Path  string // página del sitio a la que aterrizaron
+	When  string // "hace 3 h"
+}
+
+// buildReferrerBars arma las barras del top de orígenes de tráfico.
+func buildReferrerBars(top []store.ReferrerCount) []chartBar {
+	var max int64
+	for _, r := range top {
+		if r.Count > max {
+			max = r.Count
+		}
+	}
+	bars := make([]chartBar, 0, len(top))
+	for _, r := range top {
+		bars = append(bars, chartBar{
+			Label:   referrerLabel(r.Host),
+			Value:   r.Count,
+			Pct:     barPct(r.Count, max),
+			Tooltip: fmt.Sprintf("%s: %d visitas", r.Host, r.Count),
+			URL:     "https://" + r.Host,
+		})
+	}
+	return bars
+}
+
+func buildRecentReferrers(hits []store.ReferrerHit) []referrerHitView {
+	views := make([]referrerHitView, 0, len(hits))
+	for _, h := range hits {
+		views = append(views, referrerHitView{
+			Label: referrerLabel(h.Host),
+			URL:   h.URL,
+			Path:  h.Path,
+			When:  humanizeSince(time.Since(h.SeenAt)),
+		})
+	}
+	return views
+}
+
+// humanizeSince describe una antigüedad en español, en corto.
+func humanizeSince(d time.Duration) string {
+	switch {
+	case d < time.Minute:
+		return "hace un momento"
+	case d < time.Hour:
+		return fmt.Sprintf("hace %d min", int(d.Minutes()))
+	case d < 24*time.Hour:
+		return fmt.Sprintf("hace %d h", int(d.Hours()))
+	case d < 48*time.Hour:
+		return "ayer"
+	default:
+		return fmt.Sprintf("hace %d días", int(d.Hours()/24))
+	}
 }
 
 var spanishMonths = [...]string{"ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"}

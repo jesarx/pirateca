@@ -147,6 +147,53 @@
     </div>
   </div>
 
+  <!-- De dónde llegan las visitas -->
+  <div class="mb-6 grid gap-4 lg:grid-cols-2">
+    <div class="rounded border border-gray-300 bg-white p-4">
+      <h3 class="mb-1 text-sm font-semibold">De dónde llegan · top 10</h3>
+      <p class="mb-3 text-xs text-gray-500">Sitios externos que enlazan a Pirateca (histórico).</p>
+      {{if $d.ReferrerBars}}
+      <ul class="space-y-2">
+        {{range $d.ReferrerBars}}
+        <li title="{{.Tooltip}}">
+          <div class="mb-0.5 flex items-baseline justify-between gap-2 text-sm">
+            <span class="truncate">{{.Label}}</span>
+            <span class="shrink-0 text-xs text-gray-500">{{.Value}}</span>
+          </div>
+          <div class="h-2 rounded bg-gray-100">
+            <div class="h-2 rounded bg-brand" style="width: {{printf "%.1f" .Pct}}%"></div>
+          </div>
+        </li>
+        {{end}}
+      </ul>
+      {{else}}
+      <p class="py-8 text-center text-sm text-gray-500">Todavía no hay visitas con origen externo.</p>
+      {{end}}
+    </div>
+
+    <div class="rounded border border-gray-300 bg-white p-4">
+      <h3 class="mb-1 text-sm font-semibold">Últimos enlaces de entrada</h3>
+      <p class="mb-3 text-xs text-gray-500">El enlace exacto desde el que llegó cada visita reciente.</p>
+      {{if $d.RecentReferrers}}
+      <ul class="divide-y divide-gray-200">
+        {{range $d.RecentReferrers}}
+        <li class="py-2 text-sm">
+          <div class="flex items-baseline justify-between gap-2">
+            <a href="{{.URL}}" target="_blank" rel="noopener noreferrer nofollow"
+              class="truncate font-medium hover:text-blue-600 hover:underline" title="{{.URL}}">{{.Label}}</a>
+            <span class="shrink-0 text-xs text-gray-400">{{.When}}</span>
+          </div>
+          <p class="truncate text-xs text-gray-500" title="{{.URL}}">{{.URL}}</p>
+          <p class="text-xs text-gray-400">→ llegó a <a href="{{.Path}}" class="hover:underline">{{.Path}}</a></p>
+        </li>
+        {{end}}
+      </ul>
+      {{else}}
+      <p class="py-8 text-center text-sm text-gray-500">Todavía no hay enlaces de entrada registrados.</p>
+      {{end}}
+    </div>
+  </div>
+
   <!-- Últimos libros -->
   <div class="rounded border border-gray-300 bg-white p-4">
     <h3 class="mb-3 text-sm font-semibold">Últimos libros agregados</h3>

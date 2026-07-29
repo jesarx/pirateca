@@ -190,6 +190,122 @@ func (s *Store) GetTopDownloads(ctx context.Context, limit int) ([]BookDownloads
 	return top, rows.Err()
 }
 
+// DayHost identifica el acumulador de referrers de un host en un día.
+type DayHost struct {
+	Day  time.Time
+	Host string
+}
+
+type ReferrerCount struct {
+	Host  string
+	Count int64
+}
+
+type ReferrerHit struct {
+	SeenAt time.Time
+	Host   string
+	URL    string
+	Path   string
+}
+
+// maxReferrerHits es cuántos hits recientes se conservan; los más
+// viejos se podan en cada flush para que la tabla no crezca sin fin.
+const maxReferrerHits = 500
+
+// RecordReferrers vuelca los contadores por host y los hits recientes.
+func (s *Store) RecordReferrers(ctx context.Context, counts map[DayHost]int64, hits []ReferrerHit) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	for key, n := range counts {
+		if n <= 0 {
+			continue
+		}
+		_, err := s.db.ExecContext(ctx, `
+			INSERT INTO referrers (day, host, count) VALUES ($1, $2, $3)
+			ON CONFLICT (day, host) DO UPDATE SET count = referrers.count + EXCLUDED.count`,
+			key.Day.Format("2006-01-02"), key.Host, n)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, hit := range hits {
+		_, err := s.db.ExecContext(ctx, `
+			INSERT INTO referrer_hits (seen_at, host, url, path) VALUES ($1, $2, $3, $4)`,
+			hit.SeenAt, hit.Host, hit.URL, hit.Path)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(hits) > 0 {
+		_, err := s.db.ExecContext(ctx, `
+			DELETE FROM referrer_hits
+			WHERE id NOT IN (SELECT id FROM referrer_hits ORDER BY seen_at DESC, id DESC LIMIT $1)`,
+			maxReferrerHits)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// GetTopReferrers devuelve los orígenes con más visitas (histórico).
+func (s *Store) GetTopReferrers(ctx context.Context, limit int) ([]ReferrerCount, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT host, SUM(count) AS n
+		FROM referrers
+		GROUP BY host
+		ORDER BY n DESC, host ASC
+		LIMIT $1`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	top := []ReferrerCount{}
+	for rows.Next() {
+		var rc ReferrerCount
+		if err := rows.Scan(&rc.Host, &rc.Count); err != nil {
+			return nil, err
+		}
+		top = append(top, rc)
+	}
+	return top, rows.Err()
+}
+
+// GetRecentReferrers devuelve los últimos enlaces por los que llegó
+// alguien, del más reciente al más viejo.
+func (s *Store) GetRecentReferrers(ctx context.Context, limit int) ([]ReferrerHit, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT seen_at, host, url, path
+		FROM referrer_hits
+		ORDER BY seen_at DESC, id DESC
+		LIMIT $1`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	hits := []ReferrerHit{}
+	for rows.Next() {
+		var h ReferrerHit
+		if err := rows.Scan(&h.SeenAt, &h.Host, &h.URL, &h.Path); err != nil {
+			return nil, err
+		}
+		hits = append(hits, h)
+	}
+	return hits, rows.Err()
+}
+
 type SitemapEntry struct {
 	Path    string
 	LastMod time.Time
