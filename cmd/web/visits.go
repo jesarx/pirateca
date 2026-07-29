@@ -74,6 +74,52 @@ func (dc *downloadCounter) drain() map[store.DayFile]int64 {
 	return out
 }
 
+// maxPendingHits acota cuántos referrers recientes se guardan entre
+// flushes: si llegara un pico, se sigue contando el agregado pero se
+// deja de acumular detalle para no inflar la memoria.
+const maxPendingHits = 200
+
+// referrerCounter acumula en memoria de dónde llegan las visitas: el
+// conteo por host (para el top) y los últimos enlaces concretos.
+type referrerCounter struct {
+	mu     sync.Mutex
+	counts map[store.DayHost]int64
+	hits   []store.ReferrerHit
+}
+
+func newReferrerCounter() *referrerCounter {
+	return &referrerCounter{counts: map[store.DayHost]int64{}}
+}
+
+func (rc *referrerCounter) add(host, rawURL, path string) {
+	key := store.DayHost{
+		Day:  time.Now().UTC().Truncate(24 * time.Hour),
+		Host: host,
+	}
+	rc.mu.Lock()
+	defer rc.mu.Unlock()
+	rc.counts[key]++
+	if len(rc.hits) < maxPendingHits {
+		rc.hits = append(rc.hits, store.ReferrerHit{
+			SeenAt: time.Now(),
+			Host:   host,
+			URL:    rawURL,
+			Path:   path,
+		})
+	}
+}
+
+func (rc *referrerCounter) drain() (map[store.DayHost]int64, []store.ReferrerHit) {
+	rc.mu.Lock()
+	defer rc.mu.Unlock()
+	if len(rc.counts) == 0 && len(rc.hits) == 0 {
+		return nil, nil
+	}
+	counts, hits := rc.counts, rc.hits
+	rc.counts, rc.hits = map[store.DayHost]int64{}, nil
+	return counts, hits
+}
+
 func (app *application) flushVisits(ctx context.Context) {
 	if app.store == nil {
 		return
@@ -102,6 +148,20 @@ func (app *application) flushVisits(ctx context.Context) {
 			app.downloads.mu.Unlock()
 		}
 	}
+
+	if counts, hits := app.referrers.drain(); counts != nil || hits != nil {
+		if err := app.store.RecordReferrers(ctx, counts, hits); err != nil {
+			app.logger.Error("failed to flush referrers", "error", err.Error())
+			app.referrers.mu.Lock()
+			for key, n := range counts {
+				app.referrers.counts[key] += n
+			}
+			if len(app.referrers.hits)+len(hits) <= maxPendingHits {
+				app.referrers.hits = append(hits, app.referrers.hits...)
+			}
+			app.referrers.mu.Unlock()
+		}
+	}
 }
 
 // startVisitFlusher vuelca el contador cada 30s hasta que ctx se cancele,
@@ -128,6 +188,14 @@ func (app *application) countVisits(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet && isPublicPage(r.URL.Path) && !looksLikeBot(r.UserAgent()) {
 			app.visits.add()
+
+			// De dónde llegó: solo enlaces externos, la navegación
+			// dentro del sitio no es origen de tráfico.
+			if raw := r.Referer(); raw != "" {
+				if host, ok := normalizeReferrer(raw, app.selfHosts(r)...); ok {
+					app.referrers.add(host, raw, r.URL.Path)
+				}
+			}
 		}
 		next.ServeHTTP(w, r)
 	})

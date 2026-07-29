@@ -38,6 +38,7 @@ type application struct {
 	sessionSecret []byte
 	visits        *visitCounter
 	downloads     *downloadCounter
+	referrers     *referrerCounter
 }
 
 func main() {
@@ -83,6 +84,7 @@ func main() {
 		sessionSecret: sessionSecret,
 		visits:        newVisitCounter(),
 		downloads:     newDownloadCounter(),
+		referrers:     newReferrerCounter(),
 	}
 
 	// El DSN es opcional durante el desarrollo del esqueleto; las páginas
