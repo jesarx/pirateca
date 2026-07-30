@@ -60,9 +60,9 @@ sudo chown pirateca:pirateca /opt/pirateca/pirateca
 ## 4. Migraciones de base de datos
 
 Hay que aplicar la 15 (corrige la rotación de slugs), la 16 (visitas),
-la 17 (descargas) y la 18 (origen del tráfico). La 14 es un no-op
+la 17 (descargas), la 18 (origen del tráfico) y la 19 (países). La 14 es un no-op
 documental, pero es seguro correrla. `schema_migrations` del VPS está en
-11 con cambios manuales aplicados; el último comando lo sincroniza a 18
+11 con cambios manuales aplicados; el último comando lo sincroniza a 19
 por si algún día usas golang-migrate.
 
 ```sh
@@ -72,14 +72,15 @@ sudo -u postgres psql -d pirateca -f migrations/000015_fix_slug_rotation.up.sql
 sudo -u postgres psql -d pirateca -f migrations/000016_create_visits.up.sql
 sudo -u postgres psql -d pirateca -f migrations/000017_create_downloads.up.sql
 sudo -u postgres psql -d pirateca -f migrations/000018_create_referrers.up.sql
-sudo -u postgres psql -d pirateca -c "UPDATE schema_migrations SET version = 18, dirty = false;"
+sudo -u postgres psql -d pirateca -f migrations/000019_create_visitor_countries.up.sql
+sudo -u postgres psql -d pirateca -c "UPDATE schema_migrations SET version = 19, dirty = false;"
 ```
 
 Dale permisos al usuario de la app sobre las tablas nuevas (usa el
 usuario de Postgres que tengas en el DSN):
 
 ```sh
-sudo -u postgres psql -d pirateca -c "GRANT ALL ON visits, downloads, referrers, referrer_hits TO TU_USUARIO_DE_DB;"
+sudo -u postgres psql -d pirateca -c "GRANT ALL ON visits, downloads, referrers, referrer_hits, visitor_countries, ip_country_ranges TO TU_USUARIO_DE_DB;"
 sudo -u postgres psql -d pirateca -c "GRANT USAGE, SELECT ON SEQUENCE referrer_hits_id_seq TO TU_USUARIO_DE_DB;"
 ```
 
@@ -94,6 +95,19 @@ sudo chmod 600 /etc/pirateca.env
 ```
 
 Genera un secret decente con: `openssl rand -base64 48`
+
+### Países de los visitantes (opcional)
+
+Para que el panel de países del dashboard muestre algo más que «Sin
+identificar», carga la base gratuita IP → país (DB-IP Lite, CC-BY):
+
+```sh
+sudo bash deploy/import-geoip.sh
+```
+
+Se actualiza cada mes; con volver a correrlo una o dos veces al año
+basta. Las IPs de los visitantes **no se guardan nunca**: se resuelven a
+país en memoria y se descartan.
 
 ## 6. Servicio systemd
 

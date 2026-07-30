@@ -120,6 +120,94 @@ func (rc *referrerCounter) drain() (map[store.DayHost]int64, []store.ReferrerHit
 	return counts, hits
 }
 
+// maxPendingIPs acota cuántas IPs distintas se guardan en memoria entre
+// flushes para resolver su país.
+const maxPendingIPs = 2000
+
+// countryCounter acumula de qué países llegan las visitas. Las IPs solo
+// viven en memoria entre flushes: se resuelven a país y se descartan,
+// nunca se escriben en disco. Cuando el proxy ya manda el país (por
+// ejemplo Cloudflare), se cuenta directo sin pasar por la IP.
+type countryCounter struct {
+	mu       sync.Mutex
+	ips      map[string]int64 // ip -> visitas pendientes de resolver
+	resolved map[store.DayCountry]int64
+}
+
+func newCountryCounter() *countryCounter {
+	return &countryCounter{
+		ips:      map[string]int64{},
+		resolved: map[store.DayCountry]int64{},
+	}
+}
+
+func today() time.Time {
+	return time.Now().UTC().Truncate(24 * time.Hour)
+}
+
+// addIP registra una visita cuyo país habrá que resolver en el flush.
+func (cc *countryCounter) addIP(ip string) {
+	cc.mu.Lock()
+	defer cc.mu.Unlock()
+	if len(cc.ips) < maxPendingIPs || cc.ips[ip] > 0 {
+		cc.ips[ip]++
+	}
+}
+
+// addCountry registra una visita de país ya conocido.
+func (cc *countryCounter) addCountry(country string) {
+	cc.mu.Lock()
+	defer cc.mu.Unlock()
+	cc.resolved[store.DayCountry{Day: today(), Country: country}]++
+}
+
+func (cc *countryCounter) drain() (map[string]int64, map[store.DayCountry]int64) {
+	cc.mu.Lock()
+	defer cc.mu.Unlock()
+	if len(cc.ips) == 0 && len(cc.resolved) == 0 {
+		return nil, nil
+	}
+	ips, resolved := cc.ips, cc.resolved
+	cc.ips, cc.resolved = map[string]int64{}, map[store.DayCountry]int64{}
+	return ips, resolved
+}
+
+// flushCountries resuelve los países de las IPs pendientes y guarda el
+// agregado. Las IPs se descartan aquí mismo.
+func (app *application) flushCountries(ctx context.Context) {
+	ips, counts := app.countries.drain()
+	if ips == nil && counts == nil {
+		return
+	}
+	if counts == nil {
+		counts = map[store.DayCountry]int64{}
+	}
+
+	if len(ips) > 0 {
+		list := make([]string, 0, len(ips))
+		for ip := range ips {
+			list = append(list, ip)
+		}
+		byIP, err := app.store.LookupCountries(ctx, list)
+		if err != nil {
+			app.logger.Error("failed to resolve visitor countries", "error", err.Error())
+			return
+		}
+		day := today()
+		for ip, n := range ips {
+			country, ok := byIP[ip]
+			if !ok {
+				country = "??" // sin datos de geolocalización para esa IP
+			}
+			counts[store.DayCountry{Day: day, Country: country}] += n
+		}
+	}
+
+	if err := app.store.RecordCountries(ctx, counts); err != nil {
+		app.logger.Error("failed to flush countries", "error", err.Error())
+	}
+}
+
 func (app *application) flushVisits(ctx context.Context) {
 	if app.store == nil {
 		return
@@ -148,6 +236,8 @@ func (app *application) flushVisits(ctx context.Context) {
 			app.downloads.mu.Unlock()
 		}
 	}
+
+	app.flushCountries(ctx)
 
 	if counts, hits := app.referrers.drain(); counts != nil || hits != nil {
 		if err := app.store.RecordReferrers(ctx, counts, hits); err != nil {
@@ -195,6 +285,14 @@ func (app *application) countVisits(next http.Handler) http.Handler {
 				if host, ok := normalizeReferrer(raw, app.selfHosts(r)...); ok {
 					app.referrers.add(host, raw, r.URL.Path)
 				}
+			}
+
+			// Desde qué país: si el proxy ya lo resolvió se usa tal
+			// cual; si no, se guarda la IP para resolverla en el flush.
+			if country := countryFromHeaders(r); country != "" {
+				app.countries.addCountry(country)
+			} else if ip := clientIP(r); ip != "" {
+				app.countries.addIP(ip)
 			}
 		}
 		next.ServeHTTP(w, r)

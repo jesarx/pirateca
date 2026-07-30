@@ -98,6 +98,21 @@ func (app *application) dashboardHomeHandler(w http.ResponseWriter, r *http.Requ
 		app.serverError(w, r, err)
 		return
 	}
+	countriesAll, err := app.store.GetTopCountries(ctx, 0, 10)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	countriesWeek, err := app.store.GetTopCountries(ctx, 7, 10)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+	hasGeoIP, err := app.store.HasGeoIPData(ctx)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
 	months, err := app.store.GetBooksPerMonth(ctx)
 	if err != nil {
 		app.serverError(w, r, err)
@@ -122,6 +137,9 @@ func (app *application) dashboardHomeHandler(w http.ResponseWriter, r *http.Requ
 		TopDownloads:    topDownloads,
 		ReferrerBars:    buildReferrerBars(topReferrers),
 		RecentReferrers: buildRecentReferrers(recentReferrers),
+		CountriesAll:    buildCountryBars(countriesAll),
+		CountriesWeek:   buildCountryBars(countriesWeek),
+		HasGeoIP:        hasGeoIP,
 		VisitBars:       buildVisitBars(visits.Daily),
 		MonthBars:       buildMonthBars(months),
 		TagBars:         buildTagBars(tags, 10),

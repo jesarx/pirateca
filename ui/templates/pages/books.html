@@ -25,7 +25,7 @@
       {{end}}
       {{if .Filters.Tags}}<input type="hidden" name="tags" value="{{index .Filters.Tags 0}}">{{end}}
       <input
-        type="search" name="title" value="{{.Filters.Search}}" placeholder="Buscar por título…"
+        type="search" name="title" value="{{.Filters.Search}}" placeholder="Buscar por título, autor o editorial…"
         class="min-w-0 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm focus:border-gray-500 focus:outline-none"
       >
       <select name="sort" onchange="this.form.submit()"

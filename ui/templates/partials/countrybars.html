@@ -1,0 +1,19 @@
+{{define "countrybars"}}
+{{if .}}
+<ul class="space-y-2">
+  {{range .}}
+  <li title="{{.Tooltip}}">
+    <div class="mb-0.5 flex items-baseline justify-between gap-2 text-sm">
+      <span class="truncate">{{.Label}}</span>
+      <span class="shrink-0 text-xs text-gray-500">{{.Value}}</span>
+    </div>
+    <div class="h-2 rounded bg-gray-100">
+      <div class="h-2 rounded bg-brand" style="width: {{printf "%.1f" .Pct}}%"></div>
+    </div>
+  </li>
+  {{end}}
+</ul>
+{{else}}
+<p class="py-8 text-center text-sm text-gray-500">Aún no hay visitas registradas.</p>
+{{end}}
+{{end}}

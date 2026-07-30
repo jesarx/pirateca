@@ -94,6 +94,35 @@ func (f *BookFilters) normalize() {
 	}
 }
 
+// searchableBook es el texto sobre el que busca el catálogo: título,
+// título corto, ambos autores y la editorial, en minúsculas y sin
+// acentos. Se busca por subcadena en vez de full-text porque el
+// diccionario español de Postgres descarta como stopwords palabras que
+// sí aparecen en títulos ("estado", "nada", "otro"), y esas búsquedas
+// no devolvían nada. Se usa position() y no LIKE para que % y _ escritos
+// por quien busca no actúen como comodines. Con ~300 libros el escaneo
+// es instantáneo; con decenas de miles convendría un índice pg_trgm.
+const searchableBook = `unaccent(lower(
+	b.title || ' ' || b.short_title || ' ' ||
+	COALESCE(a.name, '') || ' ' || a.last_name || ' ' ||
+	COALESCE(a2.name, '') || ' ' || COALESCE(a2.last_name, '') || ' ' ||
+	p.name
+))`
+
+// searchTerms parte el texto buscado en palabras: todas deben aparecer
+// (en cualquier orden y en cualquiera de los campos), así "joyce wake"
+// encuentra "Finnegans Wake" de James Joyce. Con la lista vacía el
+// NOT EXISTS de la query no filtra nada.
+func searchTerms(search string) []string {
+	terms := []string{}
+	for _, w := range strings.Fields(search) {
+		if w = strings.TrimSpace(w); w != "" {
+			terms = append(terms, w)
+		}
+	}
+	return terms
+}
+
 func (s *Store) ListBooks(ctx context.Context, f BookFilters) ([]Book, Metadata, error) {
 	f.normalize()
 
@@ -111,7 +140,10 @@ func (s *Store) ListBooks(ctx context.Context, f BookFilters) ([]Book, Metadata,
 		LEFT JOIN authors a2 ON b.auth2_id = a2.id
 		JOIN publishers p ON b.pub_id = p.id
 		WHERE
-			($1 = '' OR to_tsvector('spanish', unaccent(b.title)) @@ plainto_tsquery('spanish', unaccent($1)))
+			NOT EXISTS (
+				SELECT 1 FROM unnest($1::text[]) AS w
+				WHERE position(unaccent(lower(w)) IN `+searchableBook+`) = 0
+			)
 			AND (b.tags @> $2 OR $2 = '{}')
 			AND ($3 = '' OR a.slug = $3 OR a2.slug = $3)
 			AND ($4 = '' OR p.slug = $4)
@@ -123,7 +155,7 @@ func (s *Store) ListBooks(ctx context.Context, f BookFilters) ([]Book, Metadata,
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	args := []any{f.Search, pq.Array(f.Tags), f.AuthorSlug, f.PublisherSlug, f.PageSize, (f.Page - 1) * f.PageSize}
+	args := []any{pq.Array(searchTerms(f.Search)), pq.Array(f.Tags), f.AuthorSlug, f.PublisherSlug, f.PageSize, (f.Page - 1) * f.PageSize}
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
