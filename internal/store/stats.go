@@ -2,7 +2,10 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 type CatalogStats struct {
@@ -188,6 +191,115 @@ func (s *Store) GetTopDownloads(ctx context.Context, limit int) ([]BookDownloads
 		top = append(top, bd)
 	}
 	return top, rows.Err()
+}
+
+// DayCountry identifica el acumulador de visitas de un país en un día.
+type DayCountry struct {
+	Day     time.Time
+	Country string
+}
+
+type CountryCount struct {
+	Country string
+	Count   int64
+}
+
+// LookupCountries resuelve un lote de IPs a su país usando la tabla de
+// rangos. Las que no caen en ningún rango no aparecen en el resultado.
+func (s *Store) LookupCountries(ctx context.Context, ips []string) (map[string]string, error) {
+	if len(ips) == 0 {
+		return nil, nil
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT host(ip.addr), (
+			SELECT r.country FROM ip_country_ranges r
+			WHERE r.start_ip <= ip.addr AND r.end_ip >= ip.addr
+			ORDER BY r.start_ip DESC
+			LIMIT 1
+		)
+		FROM unnest($1::inet[]) AS ip(addr)`, pq.Array(ips))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := map[string]string{}
+	for rows.Next() {
+		var ip string
+		var country sql.NullString
+		if err := rows.Scan(&ip, &country); err != nil {
+			return nil, err
+		}
+		if country.Valid && country.String != "" {
+			out[ip] = country.String
+		}
+	}
+	return out, rows.Err()
+}
+
+// HasGeoIPData indica si la tabla de rangos está cargada.
+func (s *Store) HasGeoIPData(ctx context.Context) (bool, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	var exists bool
+	err := s.db.QueryRowContext(ctx,
+		`SELECT EXISTS(SELECT 1 FROM ip_country_ranges LIMIT 1)`).Scan(&exists)
+	return exists, err
+}
+
+func (s *Store) RecordCountries(ctx context.Context, counts map[DayCountry]int64) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	for key, n := range counts {
+		if n <= 0 {
+			continue
+		}
+		_, err := s.db.ExecContext(ctx, `
+			INSERT INTO visitor_countries (day, country, count) VALUES ($1, $2, $3)
+			ON CONFLICT (day, country) DO UPDATE SET count = visitor_countries.count + EXCLUDED.count`,
+			key.Day.Format("2006-01-02"), key.Country, n)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// GetTopCountries devuelve los países con más visitas. Con days > 0 se
+// limita a esa ventana de días; con 0, es el histórico completo.
+func (s *Store) GetTopCountries(ctx context.Context, days, limit int) ([]CountryCount, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	query := `
+		SELECT country, SUM(count) AS n
+		FROM visitor_countries
+		WHERE ($1 = 0 OR day > CURRENT_DATE - $1::int)
+		GROUP BY country
+		ORDER BY n DESC, country ASC
+		LIMIT $2`
+
+	rows, err := s.db.QueryContext(ctx, query, days, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := []CountryCount{}
+	for rows.Next() {
+		var cc CountryCount
+		if err := rows.Scan(&cc.Country, &cc.Count); err != nil {
+			return nil, err
+		}
+		out = append(out, cc)
+	}
+	return out, rows.Err()
 }
 
 // DayHost identifica el acumulador de referrers de un host en un día.

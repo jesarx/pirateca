@@ -87,6 +87,9 @@ type dashData struct {
 	TopDownloads    []store.BookDownloads
 	ReferrerBars    []chartBar
 	RecentReferrers []referrerHitView
+	CountriesAll    []chartBar
+	CountriesWeek   []chartBar
+	HasGeoIP        bool
 	VisitBars       []chartBar
 	MonthBars       []chartBar
 	TagBars         []chartBar
@@ -99,6 +102,26 @@ type referrerHitView struct {
 	URL   string // enlace completo desde el que llegaron
 	Path  string // página del sitio a la que aterrizaron
 	When  string // "hace 3 h"
+}
+
+// buildCountryBars arma las barras de países, con bandera y nombre.
+func buildCountryBars(counts []store.CountryCount) []chartBar {
+	var max int64
+	for _, c := range counts {
+		if c.Count > max {
+			max = c.Count
+		}
+	}
+	bars := make([]chartBar, 0, len(counts))
+	for _, c := range counts {
+		bars = append(bars, chartBar{
+			Label:   countryFlag(c.Country) + " " + countryName(c.Country),
+			Value:   c.Count,
+			Pct:     barPct(c.Count, max),
+			Tooltip: fmt.Sprintf("%s: %d visitas", countryName(c.Country), c.Count),
+		})
+	}
+	return bars
 }
 
 // buildReferrerBars arma las barras del top de orígenes de tráfico.

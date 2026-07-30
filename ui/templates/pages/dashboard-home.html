@@ -147,6 +147,26 @@
     </div>
   </div>
 
+  <!-- Países de los visitantes -->
+  <div class="mb-6 grid gap-4 lg:grid-cols-2">
+    <div class="rounded border border-gray-300 bg-white p-4">
+      <h3 class="mb-1 text-sm font-semibold">Países · histórico</h3>
+      <p class="mb-3 text-xs text-gray-500">De dónde nos visitan desde siempre.</p>
+      {{template "countrybars" $d.CountriesAll}}
+    </div>
+    <div class="rounded border border-gray-300 bg-white p-4">
+      <h3 class="mb-1 text-sm font-semibold">Países · últimos 7 días</h3>
+      <p class="mb-3 text-xs text-gray-500">De dónde nos visitan esta semana.</p>
+      {{template "countrybars" $d.CountriesWeek}}
+    </div>
+  </div>
+  {{if not $d.HasGeoIP}}
+  <p class="mb-6 rounded border border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-900">
+    La base de geolocalización no está cargada, así que las visitas se cuentan como «Sin identificar».
+    Cárgala en el VPS con <code class="rounded bg-amber-100 px-1">sudo bash deploy/import-geoip.sh</code>.
+  </p>
+  {{end}}
+
   <!-- De dónde llegan las visitas -->
   <div class="mb-6 grid gap-4 lg:grid-cols-2">
     <div class="rounded border border-gray-300 bg-white p-4">

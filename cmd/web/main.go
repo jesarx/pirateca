@@ -39,6 +39,7 @@ type application struct {
 	visits        *visitCounter
 	downloads     *downloadCounter
 	referrers     *referrerCounter
+	countries     *countryCounter
 }
 
 func main() {
@@ -85,6 +86,7 @@ func main() {
 		visits:        newVisitCounter(),
 		downloads:     newDownloadCounter(),
 		referrers:     newReferrerCounter(),
+		countries:     newCountryCounter(),
 	}
 
 	// El DSN es opcional durante el desarrollo del esqueleto; las páginas
