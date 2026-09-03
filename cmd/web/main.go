@@ -27,6 +27,7 @@ type config struct {
 	uploadsDir    string
 	sessionSecret string
 	baseURL       string
+	onionAddress  string
 }
 
 type application struct {
@@ -55,8 +56,13 @@ func main() {
 		baseURLDefault = "https://pirateca.com"
 	}
 	flag.StringVar(&cfg.baseURL, "base-url", baseURLDefault, "Public base URL (for canonical links, sitemap and Open Graph)")
+	flag.StringVar(&cfg.onionAddress, "onion-address", os.Getenv("PIRATECA_ONION_ADDRESS"), "Tor onion address (e.g. abc...xyz.onion); enables the Onion-Location header and shows it on the site")
 	flag.Parse()
 	cfg.baseURL = strings.TrimRight(cfg.baseURL, "/")
+	// Se acepta con o sin esquema y barra final: por dentro se guarda
+	// como host pelado.
+	cfg.onionAddress = strings.TrimRight(cfg.onionAddress, "/")
+	cfg.onionAddress = strings.TrimPrefix(strings.TrimPrefix(cfg.onionAddress, "http://"), "https://")
 
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 

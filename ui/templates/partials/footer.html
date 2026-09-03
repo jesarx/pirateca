@@ -1,8 +1,22 @@
 {{define "footer"}}
 <footer class="border-t border-gray-200 bg-white">
-  <div class="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-5 text-sm text-gray-500">
-    <img src="/static/images/logo-libro.png" alt="" class="h-8 w-auto opacity-70">
-    <p>Los libros no se roban, ¡se expropi<span class="font-bold text-brand">Ⓐ</span>n! — Pirateca {{.CurrentYear}}</p>
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-5 text-sm text-gray-500 sm:flex-row sm:items-center sm:gap-4">
+    <div class="flex items-center gap-3">
+      <img src="/static/images/logo-libro.png" alt="" class="h-8 w-auto opacity-70">
+      <p>Los libros no se roban, ¡se expropi<span class="font-bold text-brand">Ⓐ</span>n! — Pirateca {{.CurrentYear}}</p>
+    </div>
+
+    {{if .IsOnion}}
+    <p class="sm:ml-auto">🧅 Estás navegando por <span class="font-semibold text-gray-600">Tor</span>.</p>
+    {{else if .OnionAddress}}
+    <p class="sm:ml-auto">
+      🧅 También en Tor:
+      <button type="button"
+        onclick="navigator.clipboard.writeText('http://{{.OnionAddress}}').then(() => { this.textContent = '✓ copiada'; setTimeout(() => this.textContent = '{{.OnionAddress}}', 2000); })"
+        class="cursor-pointer break-all font-mono text-xs text-gray-600 underline decoration-dotted underline-offset-2 hover:text-brand"
+        title="Copiar la dirección .onion">{{.OnionAddress}}</button>
+    </p>
+    {{end}}
   </div>
 </footer>
 {{end}}

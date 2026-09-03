@@ -53,13 +53,13 @@ func (app *application) loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.setSessionCookie(w)
+	app.setSessionCookie(w, r)
 	app.logger.Info("admin login", "email", email)
 	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 }
 
 func (app *application) logoutHandler(w http.ResponseWriter, r *http.Request) {
-	app.clearSessionCookie(w)
+	app.clearSessionCookie(w, r)
 	http.Redirect(w, r, "/books", http.StatusSeeOther)
 }
 

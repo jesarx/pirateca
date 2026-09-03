@@ -1,0 +1,14 @@
+# Servicio onion de Pirateca.
+#
+# Añade estas dos líneas a /etc/tor/torrc (o déjalas en un archivo
+# dentro de /etc/tor/torrc.d/ si tu instalación lo soporta).
+#
+# HiddenServiceDir: donde Tor guarda la clave privada y el hostname del
+#   servicio. La clave ES la identidad del sitio: quien la tenga puede
+#   suplantarlo, y si se pierde la dirección .onion se pierde para
+#   siempre. Respáldala (ver deploy/TOR.md).
+# HiddenServicePort: puerto virtual 80 de la red Tor → el nginx que
+#   escucha en loopback.
+
+HiddenServiceDir /var/lib/tor/pirateca/
+HiddenServicePort 80 127.0.0.1:8080

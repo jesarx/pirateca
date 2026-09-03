@@ -287,12 +287,19 @@ func (app *application) countVisits(next http.Handler) http.Handler {
 				}
 			}
 
-			// Desde qué país: si el proxy ya lo resolvió se usa tal
-			// cual; si no, se guarda la IP para resolverla en el flush.
-			if country := countryFromHeaders(r); country != "" {
-				app.countries.addCountry(country)
-			} else if ip := clientIP(r); ip != "" {
-				app.countries.addIP(ip)
+			// Desde qué país: las visitas por Tor no tienen país que
+			// resolver (la IP es la del daemon), así que se agrupan
+			// aparte. Si el proxy ya resolvió el país se usa tal cual;
+			// si no, se guarda la IP para resolverla en el flush.
+			switch {
+			case isOnionRequest(r):
+				app.countries.addCountry(torCountry)
+			default:
+				if country := countryFromHeaders(r); country != "" {
+					app.countries.addCountry(country)
+				} else if ip := clientIP(r); ip != "" {
+					app.countries.addIP(ip)
+				}
 			}
 		}
 		next.ServeHTTP(w, r)

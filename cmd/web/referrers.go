@@ -105,5 +105,8 @@ func (app *application) selfHosts(r *http.Request) []string {
 	if u, err := url.Parse(app.config.baseURL); err == nil && u.Hostname() != "" {
 		hosts = append(hosts, u.Hostname())
 	}
+	if app.config.onionAddress != "" {
+		hosts = append(hosts, app.config.onionAddress)
+	}
 	return hosts
 }

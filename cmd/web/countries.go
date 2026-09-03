@@ -49,9 +49,18 @@ func countryFromHeaders(r *http.Request) string {
 	return ""
 }
 
+// torCountry es el pseudo-país de las visitas que llegan por el servicio
+// onion: no tienen país que resolver (la IP es la del daemon de Tor) y
+// mezclarlas con «Sin identificar» ocultaría cuánta gente nos lee por
+// Tor, que es justo lo interesante de saber.
+const torCountry = "TOR"
+
 // countryFlag deriva la bandera emoji del código ISO 3166-1 alpha-2
 // (cada letra se mapea a su símbolo indicador regional).
 func countryFlag(code string) string {
+	if code == torCountry {
+		return "🧅"
+	}
 	if len(code) != 2 {
 		return "🏳"
 	}
@@ -88,7 +97,8 @@ var countryNames = map[string]string{
 	"AU": "Australia", "NZ": "Nueva Zelanda",
 	"MA": "Marruecos", "DZ": "Argelia", "EG": "Egipto", "ZA": "Sudáfrica",
 	"NG": "Nigeria", "KE": "Kenia",
-	"??": "Sin identificar",
+	"??":       "Sin identificar",
+	torCountry: "Red Tor",
 }
 
 func countryName(code string) string {

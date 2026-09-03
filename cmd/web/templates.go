@@ -18,6 +18,8 @@ type templateData struct {
 	CurrentYear     int
 	CurrentPath     string
 	BaseURL         string
+	OnionAddress    string
+	IsOnion         bool
 	CSSVersion      string
 	MetaDescription string
 	JSONLD          template.JS
@@ -49,7 +51,9 @@ func (app *application) newTemplateData(r *http.Request) templateData {
 	return templateData{
 		CurrentYear:     time.Now().Year(),
 		CurrentPath:     r.URL.Path,
-		BaseURL:         app.config.baseURL,
+		BaseURL:         app.baseURLFor(r),
+		OnionAddress:    app.config.onionAddress,
+		IsOnion:         isOnionRequest(r),
 		CSSVersion:      cssVersion,
 		IsAuthenticated: app.isAuthenticated(r),
 	}
