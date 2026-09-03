@@ -135,7 +135,7 @@ func (app *application) bookDetailHandler(w http.ResponseWriter, r *http.Request
 		data.MetaDescription = truncate(fmt.Sprintf("«%s» de %s (%s, %d). Descarga libre en PDF o torrent.",
 			book.Title, book.AuthorFullName(), book.PublisherName, book.Year), 158)
 	}
-	data.JSONLD = bookJSONLD(app.config.baseURL, book)
+	data.JSONLD = bookJSONLD(app.baseURLFor(r), book)
 	app.render(w, r, http.StatusOK, "book.html", data)
 }
 

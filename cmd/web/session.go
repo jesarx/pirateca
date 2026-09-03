@@ -26,7 +26,17 @@ func (app *application) signSession(expiry int64) string {
 	return payload + "." + sig
 }
 
-func (app *application) setSessionCookie(w http.ResponseWriter) {
+// secureCookie decide el flag Secure: en producción sí, salvo cuando la
+// petición llega sin TLS por el servicio onion (ahí el cifrado lo pone
+// Tor y marcarla Secure impediría iniciar sesión).
+func (app *application) secureCookie(r *http.Request) bool {
+	if app.config.env != "production" {
+		return false
+	}
+	return isSecureRequest(r) || !isOnionRequest(r)
+}
+
+func (app *application) setSessionCookie(w http.ResponseWriter, r *http.Request) {
 	expiry := time.Now().Add(sessionTTL)
 	http.SetCookie(w, &http.Cookie{
 		Name:     sessionCookieName,
@@ -34,19 +44,19 @@ func (app *application) setSessionCookie(w http.ResponseWriter) {
 		Path:     "/",
 		Expires:  expiry,
 		HttpOnly: true,
-		Secure:   app.config.env == "production",
+		Secure:   app.secureCookie(r),
 		SameSite: http.SameSiteLaxMode,
 	})
 }
 
-func (app *application) clearSessionCookie(w http.ResponseWriter) {
+func (app *application) clearSessionCookie(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     sessionCookieName,
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   app.config.env == "production",
+		Secure:   app.secureCookie(r),
 		SameSite: http.SameSiteLaxMode,
 	})
 }

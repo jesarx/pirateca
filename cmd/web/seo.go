@@ -58,7 +58,7 @@ Disallow: /dashboard
 Disallow: /admin
 
 Sitemap: %s/sitemap.xml
-`, app.config.baseURL)
+`, app.baseURLFor(r))
 }
 
 func (app *application) sitemapHandler(w http.ResponseWriter, r *http.Request) {
@@ -79,8 +79,9 @@ func (app *application) sitemapHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<?xml version="1.0" encoding="UTF-8"?>`+"\n")
 	fmt.Fprint(w, `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`+"\n")
 
+	baseURL := app.baseURLFor(r)
 	writeURL := func(path string, lastmod time.Time) {
-		fmt.Fprintf(w, "  <url><loc>%s%s</loc>", app.config.baseURL, path)
+		fmt.Fprintf(w, "  <url><loc>%s%s</loc>", baseURL, path)
 		if !lastmod.IsZero() {
 			fmt.Fprintf(w, "<lastmod>%s</lastmod>", lastmod.Format("2006-01-02"))
 		}

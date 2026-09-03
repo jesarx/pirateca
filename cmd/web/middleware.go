@@ -29,7 +29,21 @@ func (app *application) securityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "deny")
-		w.Header().Set("Referrer-Policy", "origin-when-cross-origin")
+
+		if isOnionRequest(r) {
+			// Desde el servicio onion no se filtra a dónde se navega:
+			// mandar nuestro origen revelaría la dirección .onion a los
+			// sitios enlazados.
+			w.Header().Set("Referrer-Policy", "no-referrer")
+		} else {
+			w.Header().Set("Referrer-Policy", "origin-when-cross-origin")
+			// Anuncia la versión onion: Tor Browser ofrece saltar a ella
+			// con un botón en la barra de direcciones.
+			if loc := app.onionLocation(r); loc != "" {
+				w.Header().Set("Onion-Location", loc)
+			}
+		}
+
 		next.ServeHTTP(w, r)
 	})
 }
