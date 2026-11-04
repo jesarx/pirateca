@@ -145,6 +145,14 @@ func main() {
 		srv.Shutdown(shutdownCtx)
 	}()
 
+	// Se registra al arrancar para poder confirmar de un vistazo, con
+	// journalctl, si el servicio onion quedó bien configurado.
+	if cfg.onionAddress != "" {
+		logger.Info("onion service configured", "address", cfg.onionAddress)
+	} else {
+		logger.Info("no onion service configured (set PIRATECA_ONION_ADDRESS to announce one)")
+	}
+
 	logger.Info("starting server", "addr", cfg.addr, "env", cfg.env)
 	err = srv.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
