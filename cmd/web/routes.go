@@ -52,6 +52,8 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("POST /dashboard/books/new", app.requireAuth(app.createBookHandler))
 	mux.HandleFunc("GET /dashboard/books/{id}/edit", app.requireAuth(app.editBookFormHandler))
 	mux.HandleFunc("POST /dashboard/books/{id}/edit", app.requireAuth(app.updateBookHandler))
+	mux.HandleFunc("GET /dashboard/isbn", app.requireAuth(app.isbnLookupHandler))
+	mux.HandleFunc("GET /dashboard/books/{id}/delete", app.requireAuth(app.deleteBookConfirmHandler))
 	mux.HandleFunc("POST /dashboard/books/{id}/delete", app.requireAuth(app.deleteBookHandler))
 
 	mux.HandleFunc("GET /dashboard/authors", app.requireAuth(app.dashboardAuthorsHandler))

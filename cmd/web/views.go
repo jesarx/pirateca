@@ -272,10 +272,20 @@ type pageLink struct {
 	Ellipsis bool
 }
 
+// pagination es lo que pinta partials/pagination.html: las flechas de
+// anterior/siguiente (URL vacía = deshabilitada, en la primera o la
+// última página) y los números de página.
+type pagination struct {
+	PrevURL string
+	NextURL string
+	Pages   []pageLink
+}
+
 // buildPagination arma los enlaces de paginación conservando el path
 // actual y el resto de los query params: primera y última página siempre
-// visibles, ventana de ±2 alrededor de la actual y elipsis en los huecos.
-func buildPagination(m store.Metadata, path string, qs url.Values) []pageLink {
+// visibles, ventana de ±2 alrededor de la actual y elipsis en los huecos,
+// más flechas de anterior/siguiente.
+func buildPagination(m store.Metadata, path string, qs url.Values) *pagination {
 	if m.LastPage <= 1 {
 		return nil
 	}
@@ -289,7 +299,14 @@ func buildPagination(m store.Metadata, path string, qs url.Values) []pageLink {
 		return path + "?" + values.Encode()
 	}
 
-	var links []pageLink
+	p := &pagination{}
+	if m.CurrentPage > 1 {
+		p.PrevURL = pageURL(m.CurrentPage - 1)
+	}
+	if m.CurrentPage < m.LastPage {
+		p.NextURL = pageURL(m.CurrentPage + 1)
+	}
+
 	prevShown := 0
 	for page := 1; page <= m.LastPage; page++ {
 		show := page == 1 || page == m.LastPage ||
@@ -298,14 +315,14 @@ func buildPagination(m store.Metadata, path string, qs url.Values) []pageLink {
 			continue
 		}
 		if prevShown != 0 && page != prevShown+1 {
-			links = append(links, pageLink{Ellipsis: true})
+			p.Pages = append(p.Pages, pageLink{Ellipsis: true})
 		}
-		links = append(links, pageLink{
+		p.Pages = append(p.Pages, pageLink{
 			Label:   strconv.Itoa(page),
 			URL:     pageURL(page),
 			Current: page == m.CurrentPage,
 		})
 		prevShown = page
 	}
-	return links
+	return p
 }

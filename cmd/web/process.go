@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -124,6 +125,72 @@ func saveFormFile(r *http.Request, field, dst string, allowedExts []string) erro
 		return fmt.Errorf("failed to save %s: %w", dst, err)
 	}
 	return out.Close()
+}
+
+// hasUpload dice si el formulario multipart trae un archivo no vacío en
+// el campo dado (los navegadores mandan el campo vacío si no se eligió
+// nada).
+func hasUpload(r *http.Request, field string) bool {
+	if r.MultipartForm == nil {
+		return false
+	}
+	fhs := r.MultipartForm.File[field]
+	return len(fhs) > 0 && fhs[0].Size > 0
+}
+
+// checkPDFUpload verifica que el archivo subido sea de verdad un PDF: la
+// extensión y la firma "%PDF-", que la especificación permite dentro del
+// primer KB. Se hace ANTES de escribir nada en uploads/.
+func checkPDFUpload(r *http.Request, field string) error {
+	fhs := r.MultipartForm.File[field]
+	if len(fhs) == 0 {
+		return errors.New("Falta el PDF.")
+	}
+	if _, err := safeFileName(fhs[0].Filename, []string{".pdf"}); err != nil {
+		return errors.New("El archivo debe tener extensión .pdf.")
+	}
+	f, err := fhs[0].Open()
+	if err != nil {
+		return fmt.Errorf("No se pudo leer el PDF: %v", err)
+	}
+	defer f.Close()
+	head := make([]byte, 1024)
+	n, _ := io.ReadFull(f, head)
+	if !bytes.Contains(head[:n], []byte("%PDF-")) {
+		return errors.New("El archivo no parece un PDF válido.")
+	}
+	return nil
+}
+
+// bookFiles dice qué archivos de un libro existen realmente en disco,
+// para no mostrar botones de descarga que lleven a un 404.
+type bookFiles struct {
+	PDF     bool
+	Cover   bool
+	Torrent bool
+}
+
+func (app *application) bookFiles(base string) bookFiles {
+	if !validBase(base) {
+		return bookFiles{}
+	}
+	exists := func(parts ...string) bool {
+		info, err := os.Stat(app.uploadPath(parts...))
+		return err == nil && info.Mode().IsRegular() && info.Size() > 0
+	}
+	return bookFiles{
+		PDF:     exists("pdfs", base+".pdf"),
+		Cover:   exists("covers", base+".jpg"),
+		Torrent: exists("torrents", base+".pdf.torrent"),
+	}
+}
+
+// validBase acepta solo nombres base sin separadores de ruta: es la
+// última barrera antes de construir rutas para leer o BORRAR archivos.
+func validBase(base string) bool {
+	return base != "" && base != "." && base != ".." &&
+		!strings.ContainsAny(base, `/\`) && !strings.Contains(base, "..") &&
+		filepath.Base(base) == base
 }
 
 // processPDF ejecuta el pipeline completo del PDF. EL ORDEN IMPORTA:
@@ -268,16 +335,5 @@ func (app *application) removeFiles(paths []string) {
 		if err := os.Remove(p); err != nil && !os.IsNotExist(err) {
 			app.logger.Error("failed to remove file", "path", p, "error", err.Error())
 		}
-	}
-}
-
-// bookFilePaths devuelve las rutas de todos los archivos asociados a un
-// nombre base (las mismas que borraba el API viejo al eliminar un libro).
-func (app *application) bookFilePaths(base string) []string {
-	return []string{
-		app.uploadPath("pdfs", base+".pdf"),
-		app.uploadPath("covers", base+".jpg"),
-		app.uploadPath("torrents", base+".pdf.torrent"),
-		app.uploadPath("torrentadded", base+".pdf.torrent"),
 	}
 }

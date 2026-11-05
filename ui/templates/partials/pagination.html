@@ -1,14 +1,40 @@
 {{define "pagination"}}
-{{if .Pagination}}
+{{with .Pagination}}
 <nav class="mt-8 flex flex-wrap items-center justify-center gap-1 text-sm" aria-label="Paginación">
-  {{range .Pagination}}
+  {{if .PrevURL}}
+  <a href="{{.PrevURL}}" rel="prev" aria-label="Página anterior" title="Página anterior"
+    class="inline-flex items-center gap-1 rounded border border-gray-300 bg-white px-2.5 py-1.5 hover:border-gray-400 hover:text-blue-600">
+    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.8 4.2a.75.75 0 0 1 0 1.06L8.06 10l4.74 4.74a.75.75 0 1 1-1.06 1.06l-5.27-5.27a.75.75 0 0 1 0-1.06l5.27-5.27a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd"/></svg>
+    <span class="hidden sm:inline">Anterior</span>
+  </a>
+  {{else}}
+  <span aria-hidden="true" class="inline-flex cursor-not-allowed items-center gap-1 rounded border border-gray-200 px-2.5 py-1.5 text-gray-400">
+    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.8 4.2a.75.75 0 0 1 0 1.06L8.06 10l4.74 4.74a.75.75 0 1 1-1.06 1.06l-5.27-5.27a.75.75 0 0 1 0-1.06l5.27-5.27a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd"/></svg>
+    <span class="hidden sm:inline">Anterior</span>
+  </span>
+  {{end}}
+
+  {{range .Pages}}
   {{if .Ellipsis}}
   <span class="px-2 text-gray-400">…</span>
   {{else if .Current}}
-  <span class="rounded bg-gray-900 px-3 py-1.5 font-semibold text-white">{{.Label}}</span>
+  <span aria-current="page" class="rounded bg-gray-900 px-3 py-1.5 font-semibold text-white">{{.Label}}</span>
   {{else}}
   <a href="{{.URL}}" class="rounded border border-gray-300 bg-white px-3 py-1.5 hover:border-gray-400 hover:text-blue-600">{{.Label}}</a>
   {{end}}
+  {{end}}
+
+  {{if .NextURL}}
+  <a href="{{.NextURL}}" rel="next" aria-label="Página siguiente" title="Página siguiente"
+    class="inline-flex items-center gap-1 rounded border border-gray-300 bg-white px-2.5 py-1.5 hover:border-gray-400 hover:text-blue-600">
+    <span class="hidden sm:inline">Siguiente</span>
+    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.2 15.8a.75.75 0 0 1 0-1.06L11.94 10 7.2 5.26a.75.75 0 0 1 1.06-1.06l5.27 5.27a.75.75 0 0 1 0 1.06l-5.27 5.27a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"/></svg>
+  </a>
+  {{else}}
+  <span aria-hidden="true" class="inline-flex cursor-not-allowed items-center gap-1 rounded border border-gray-200 px-2.5 py-1.5 text-gray-400">
+    <span class="hidden sm:inline">Siguiente</span>
+    <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.2 15.8a.75.75 0 0 1 0-1.06L11.94 10 7.2 5.26a.75.75 0 0 1 1.06-1.06l5.27 5.27a.75.75 0 0 1 0 1.06l-5.27 5.27a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"/></svg>
+  </span>
   {{end}}
 </nav>
 {{end}}

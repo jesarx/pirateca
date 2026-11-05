@@ -40,3 +40,64 @@
   --color-brand: oklch(70.4% 0.191 22.2);
   --color-brand-dark: oklch(60% 0.175 22.2);
 }
+
+/* ---------------------------------------------------------------------
+   Modo noche
+
+   Se activa con <html data-theme="dark"> (lo pone el switch de la barra
+   y un script en <head> antes de pintar, para que no parpadee).
+
+   En lugar de duplicar cada clase con dark:, se reasignan los colores de
+   la paleta: los grises se invierten (lo claro pasa a oscuro y
+   viceversa), "white" pasa a ser la superficie de las tarjetas y los
+   acentos se aclaran para que contrasten sobre fondo oscuro. Así toda
+   plantilla nueva hereda el modo noche sin tocarla.
+
+   Consecuencia buscada: los botones "bg-gray-900 text-white" quedan
+   invertidos (claros con texto oscuro). Para un blanco que debe seguir
+   siendo blanco en ambos temas (la barra coral) se usa "snow".
+   --------------------------------------------------------------------- */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --color-snow: #fff;
+  /* El fondo rosado claro, fijo en ambos temas: respaldo del logo, que
+     trae texto negro dentro del PNG. */
+  --color-paper: oklch(97.1% 0.013 17.38);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-page: oklch(19.5% 0.012 17.38);
+  --color-white: oklch(24% 0.013 17.38);
+
+  --color-gray-50: oklch(26.5% 0.012 17.38);
+  --color-gray-100: oklch(29% 0.012 17.38);
+  --color-gray-200: oklch(32% 0.012 17.38);
+  --color-gray-300: oklch(37% 0.012 17.38);
+  --color-gray-400: oklch(50% 0.012 17.38);
+  --color-gray-500: oklch(69% 0.01 17.38);
+  --color-gray-600: oklch(76% 0.009 17.38);
+  --color-gray-700: oklch(83% 0.008 17.38);
+  --color-gray-800: oklch(89% 0.006 17.38);
+  --color-gray-900: oklch(93% 0.005 17.38);
+  --color-gray-950: oklch(97% 0.003 17.38);
+
+  --color-brand: oklch(70.4% 0.191 22.2);
+  --color-brand-dark: oklch(78% 0.15 22.2);
+
+  --color-blue-600: oklch(75% 0.13 250);
+
+  --color-red-50: oklch(27% 0.06 25);
+  --color-red-300: oklch(45% 0.12 25);
+  --color-red-600: oklch(74% 0.16 22);
+  --color-red-800: oklch(85% 0.09 20);
+
+  --color-green-600: oklch(76% 0.15 150);
+
+  --color-amber-50: oklch(27% 0.05 75);
+  --color-amber-100: oklch(32% 0.06 75);
+  --color-amber-300: oklch(48% 0.1 75);
+  --color-amber-900: oklch(88% 0.09 85);
+}

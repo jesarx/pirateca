@@ -18,6 +18,8 @@
   {{end}}
   <link rel="icon" href="/static/favicon.ico">
   <link rel="stylesheet" href="/static/css/app.css?v={{.CSSVersion}}">
+  {{/* Aplica el modo noche ANTES de pintar, para que no parpadee. */}}
+  <script>try{if(localStorage.getItem("pirateca-theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
 </head>
 <body class="flex min-h-full flex-col bg-page font-sans text-gray-800">
   {{template "nav" .}}
@@ -25,6 +27,27 @@
     {{template "main" .}}
   </main>
   {{template "footer" .}}
+  <script>
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById("theme-toggle");
+    if (!btn) return;
+    function sync() {
+      var dark = root.getAttribute("data-theme") === "dark";
+      btn.setAttribute("aria-checked", dark ? "true" : "false");
+      btn.title = dark ? "Cambiar a modo día" : "Cambiar a modo noche";
+    }
+    btn.hidden = false;
+    sync();
+    btn.addEventListener("click", function () {
+      var dark = root.getAttribute("data-theme") !== "dark";
+      if (dark) root.setAttribute("data-theme", "dark");
+      else root.removeAttribute("data-theme");
+      try { localStorage.setItem("pirateca-theme", dark ? "dark" : "light"); } catch (e) {}
+      sync();
+    });
+  })();
+  </script>
 </body>
 </html>
 {{end}}

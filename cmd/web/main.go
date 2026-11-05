@@ -28,6 +28,12 @@ type config struct {
 	sessionSecret string
 	baseURL       string
 	onionAddress  string
+	transmission  struct {
+		url  string
+		user string
+		pass string
+	}
+	isbnGoogleKey string
 }
 
 type application struct {
@@ -41,6 +47,8 @@ type application struct {
 	downloads     *downloadCounter
 	referrers     *referrerCounter
 	countries     *countryCounter
+	transmission  *transmissionClient
+	isbn          *isbnLookup
 }
 
 func main() {
@@ -57,6 +65,14 @@ func main() {
 	}
 	flag.StringVar(&cfg.baseURL, "base-url", baseURLDefault, "Public base URL (for canonical links, sitemap and Open Graph)")
 	flag.StringVar(&cfg.onionAddress, "onion-address", os.Getenv("PIRATECA_ONION_ADDRESS"), "Tor onion address (e.g. abc...xyz.onion); enables the Onion-Location header and shows it on the site")
+	transmissionURL := os.Getenv("PIRATECA_TRANSMISSION_URL")
+	if transmissionURL == "" {
+		transmissionURL = "http://127.0.0.1:9091/transmission/rpc"
+	}
+	flag.StringVar(&cfg.transmission.url, "transmission-url", transmissionURL, "transmission-daemon RPC URL, used to stop seeding deleted books (\"off\" disables it)")
+	flag.StringVar(&cfg.transmission.user, "transmission-user", os.Getenv("PIRATECA_TRANSMISSION_USER"), "transmission-daemon RPC user")
+	flag.StringVar(&cfg.transmission.pass, "transmission-pass", os.Getenv("PIRATECA_TRANSMISSION_PASS"), "transmission-daemon RPC password")
+	flag.StringVar(&cfg.isbnGoogleKey, "google-books-key", os.Getenv("PIRATECA_GOOGLE_BOOKS_KEY"), "Optional Google Books API key for the ISBN autofill")
 	flag.Parse()
 	cfg.baseURL = strings.TrimRight(cfg.baseURL, "/")
 	// Se acepta con o sin esquema y barra final: por dentro se guarda
@@ -93,6 +109,8 @@ func main() {
 		downloads:     newDownloadCounter(),
 		referrers:     newReferrerCounter(),
 		countries:     newCountryCounter(),
+		transmission:  newTransmissionClient(cfg.transmission.url, cfg.transmission.user, cfg.transmission.pass),
+		isbn:          newISBNLookup(cfg.isbnGoogleKey),
 	}
 
 	// El DSN es opcional durante el desarrollo del esqueleto; las páginas
