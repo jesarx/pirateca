@@ -30,6 +30,7 @@ type templateData struct {
 	Form            any
 	Books           []store.Book
 	CoverSizes      map[string]coverSize
+	Files           bookFiles
 	Book            *store.Book
 	Authors         []store.Author
 	Publishers      []store.Publisher
@@ -37,7 +38,7 @@ type templateData struct {
 	Metadata        store.Metadata
 	Filters         store.BookFilters
 	SortOptions     []sortOption
-	Pagination      []pageLink
+	Pagination      *pagination
 	Dash            *dashData
 	ShowNews        bool
 	TagCloud        []chartBar

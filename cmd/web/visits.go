@@ -63,6 +63,18 @@ func (dc *downloadCounter) add(filename string) {
 	dc.mu.Unlock()
 }
 
+// forget descarta las descargas pendientes de un archivo (al borrar su
+// libro), para que el siguiente flush no las vuelva a escribir.
+func (dc *downloadCounter) forget(filename string) {
+	dc.mu.Lock()
+	defer dc.mu.Unlock()
+	for key := range dc.counts {
+		if key.Filename == filename {
+			delete(dc.counts, key)
+		}
+	}
+}
+
 func (dc *downloadCounter) drain() map[store.DayFile]int64 {
 	dc.mu.Lock()
 	defer dc.mu.Unlock()

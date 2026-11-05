@@ -248,11 +248,21 @@ func (s *Store) UpdateBook(ctx context.Context, id int64, version int, in BookIn
 	return slug, err
 }
 
-func (s *Store) DeleteBook(ctx context.Context, id int64) error {
-	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+// DeleteBook borra el libro y, en la misma transacción, su historial de
+// descargas (que se guarda por nombre de archivo). Los autores y la
+// editorial NO se tocan: pueden tener otros libros. Si algo falla no se
+// borra nada.
+func (s *Store) DeleteBook(ctx context.Context, id int64, filename string) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	result, err := s.db.ExecContext(ctx, `DELETE FROM books WHERE id = $1`, id)
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	result, err := tx.ExecContext(ctx, `DELETE FROM books WHERE id = $1`, id)
 	if err != nil {
 		return err
 	}
@@ -260,10 +270,35 @@ func (s *Store) DeleteBook(ctx context.Context, id int64) error {
 	if err != nil {
 		return err
 	}
-	if n == 0 {
+	if n != 1 {
 		return ErrNotFound
 	}
-	return nil
+
+	if filename != "" {
+		// Solo si ningún otro libro usa ese nombre (filename es UNIQUE,
+		// pero se comprueba igual: aquí no se arriesga nada ajeno).
+		if _, err := tx.ExecContext(ctx, `
+			DELETE FROM downloads
+			WHERE filename = $1
+			  AND NOT EXISTS (SELECT 1 FROM books WHERE filename = $1)`, filename); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+// DownloadsForFile devuelve el total histórico de descargas registradas
+// para un nombre base de archivo.
+func (s *Store) DownloadsForFile(ctx context.Context, filename string) (int64, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	var total int64
+	err := s.db.QueryRowContext(ctx,
+		`SELECT COALESCE(SUM(count), 0) FROM downloads WHERE filename = $1`, filename,
+	).Scan(&total)
+	return total, err
 }
 
 func (s *Store) FilenameExists(ctx context.Context, filename string) (bool, error) {

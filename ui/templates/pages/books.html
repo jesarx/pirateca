@@ -3,7 +3,7 @@
 {{define "main"}}
 {{if .ShowNews}}
 <section class="mb-6 flex flex-col items-center gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm sm:flex-row sm:gap-6">
-  <img src="/static/images/logo.png" alt="Pirateca — los libros no se roban, ¡se expropian!" class="w-24 shrink-0">
+  <img src="/static/images/logo.png" alt="Pirateca — los libros no se roban, ¡se expropian!" class="w-24 shrink-0 dark:rounded-lg dark:bg-paper dark:p-1.5">
   <div class="flex-1 text-center sm:text-left">
     <p class="text-sm text-gray-700">Biblioteca digital libre. Explora el catálogo, descarga en PDF o por torrent, y comparte.</p>
     <a href="/news/mal-que-dura-cien-anos" class="mt-2.5 block rounded-lg border border-gray-200 bg-page px-3 py-2 transition-colors hover:border-brand">
@@ -36,7 +36,7 @@
       </select>
       <button type="submit" class="rounded bg-gray-900 px-3 py-1.5 text-sm font-semibold text-white hover:bg-gray-700">Buscar</button>
       <a href="{{.RandomURL}}" title="Mostrar el catálogo en orden aleatorio"
-        class="rounded border border-brand px-3 py-1.5 text-center text-sm font-semibold text-brand-dark hover:bg-brand hover:text-white">
+        class="rounded border border-brand px-3 py-1.5 text-center text-sm font-semibold text-brand-dark hover:bg-brand hover:text-snow">
         🎲 {{if eq .Filters.Sort "random"}}Barajar otra vez{{else}}Sorpréndeme{{end}}
       </a>
     </form>

@@ -194,6 +194,8 @@ type bookForm struct {
 	Version  int
 	Filename string
 	Slug     string
+	HasPDF   bool // el PDF existe en disco
+	HasCover bool // la portada existe en disco
 }
 
 func parseBookForm(r *http.Request) bookForm {
@@ -256,6 +258,25 @@ func (f *bookForm) validate() bool {
 	return len(f.Errors) == 0
 }
 
+// validateUploads revisa los archivos de un libro NUEVO. Igual que en el
+// API viejo, PDF y portada son obligatorios: un libro sin PDF quedaba
+// publicado con botones de descarga que llevaban a un 404.
+func (f *bookForm) validateUploads(r *http.Request) {
+	if !hasUpload(r, "pdf") {
+		f.Errors["pdf"] = "Falta el PDF."
+	} else if err := checkPDFUpload(r, "pdf"); err != nil {
+		f.Errors["pdf"] = err.Error()
+	}
+	if !hasUpload(r, "image") {
+		f.Errors["image"] = "Falta la portada."
+	}
+}
+
+// filesLostNotice se muestra cuando el formulario regresa con errores:
+// por seguridad, los navegadores nunca vuelven a llenar los campos de
+// archivo, así que hay que volver a elegirlos.
+const filesLostNotice = "Corrige lo marcado en rojo y vuelve a seleccionar el PDF y la portada: el navegador no los conserva al recargar el formulario."
+
 func (app *application) newBookFormHandler(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	data.Form = bookForm{DirDwl: true, Errors: map[string]string{}}
@@ -276,7 +297,10 @@ func (app *application) createBookHandler(w http.ResponseWriter, r *http.Request
 		app.render(w, r, status, "book-form.html", data)
 	}
 
-	if !form.validate() {
+	form.validate()
+	form.validateUploads(r)
+	if len(form.Errors) > 0 {
+		form.Errors["general"] = filesLostNotice
 		renderForm(http.StatusUnprocessableEntity)
 		return
 	}
@@ -316,6 +340,7 @@ func (app *application) createBookHandler(w http.ResponseWriter, r *http.Request
 	}
 	if exists {
 		form.Errors["short_title"] = fmt.Sprintf("Ya existe un libro con el nombre de archivo %q (mismo autor y título corto).", base)
+		form.Errors["general"] = filesLostNotice
 		renderForm(http.StatusUnprocessableEntity)
 		return
 	}
@@ -332,7 +357,9 @@ func (app *application) createBookHandler(w http.ResponseWriter, r *http.Request
 	written = append(written, pdfWritten...)
 	if err != nil {
 		app.removeFiles(written)
-		app.serverError(w, r, err)
+		app.logger.Error("pdf processing failed", "filename", base, "error", err.Error())
+		form.Errors["general"] = "No se pudo procesar el PDF (no se guardó nada). Detalle: " + err.Error()
+		renderForm(http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -342,7 +369,9 @@ func (app *application) createBookHandler(w http.ResponseWriter, r *http.Request
 	written = append(written, coverWritten...)
 	if err != nil {
 		app.removeFiles(written)
-		app.serverError(w, r, err)
+		app.logger.Error("cover processing failed", "filename", base, "error", err.Error())
+		form.Errors["general"] = "No se pudo procesar la portada (no se guardó nada). Detalle: " + err.Error()
+		renderForm(http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -398,6 +427,8 @@ func (app *application) editBookFormHandler(w http.ResponseWriter, r *http.Reque
 		Filename:       book.Filename,
 		Slug:           book.Slug,
 	}
+	files := app.bookFiles(book.Filename)
+	form.HasPDF, form.HasCover = files.PDF, files.Cover
 	if book.Author2Name != nil {
 		form.Author2Name = *book.Author2Name
 	}
@@ -426,6 +457,8 @@ func (app *application) updateBookHandler(w http.ResponseWriter, r *http.Request
 	form.Version = book.Version
 	form.Filename = book.Filename
 	form.Slug = book.Slug
+	files := app.bookFiles(book.Filename)
+	form.HasPDF, form.HasCover = files.PDF, files.Cover
 
 	renderForm := func(status int) {
 		data := app.newTemplateData(r)
@@ -433,7 +466,18 @@ func (app *application) updateBookHandler(w http.ResponseWriter, r *http.Request
 		app.render(w, r, status, "book-form.html", data)
 	}
 
-	if !form.validate() {
+	form.validate()
+	// Un PDF en edición solo se acepta si el libro no tiene uno en disco
+	// (p. ej. se publicó sin él): el PDF publicado es inmutable porque su
+	// torrent ya circula.
+	addPDF := !form.HasPDF && book.Filename != "" && hasUpload(r, "pdf")
+	if addPDF {
+		if err := checkPDFUpload(r, "pdf"); err != nil {
+			form.Errors["pdf"] = err.Error()
+		}
+	}
+	if len(form.Errors) > 0 {
+		form.Errors["general"] = "Corrige lo marcado en rojo. Si habías elegido archivos, vuelve a seleccionarlos: el navegador no los conserva al recargar el formulario."
 		renderForm(http.StatusUnprocessableEntity)
 		return
 	}
@@ -460,11 +504,28 @@ func (app *application) updateBookHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// En edición el PDF es inmutable (su torrent ya circula); solo se
-	// puede reemplazar la portada, conservando el nombre base.
 	if book.Filename != "" {
-		if _, err := app.processCover(r, book.Filename); err != nil {
+		if err := app.ensureUploadDirs(); err != nil {
 			app.serverError(w, r, err)
+			return
+		}
+		if addPDF {
+			written, err := app.processPDF(r, book.Filename, form.ShortTitle, author.FullName(), publisher.Name)
+			if err != nil {
+				app.removeFiles(written)
+				app.logger.Error("pdf processing failed", "filename", book.Filename, "error", err.Error())
+				form.Errors["general"] = "No se pudo procesar el PDF (no se guardó nada). Detalle: " + err.Error()
+				renderForm(http.StatusUnprocessableEntity)
+				return
+			}
+			app.logger.Info("pdf added to existing book", "filename", book.Filename)
+		}
+		// La portada se puede reemplazar siempre, conservando el nombre
+		// base.
+		if _, err := app.processCover(r, book.Filename); err != nil {
+			app.logger.Error("cover processing failed", "filename", book.Filename, "error", err.Error())
+			form.Errors["general"] = "No se pudo procesar la portada. Detalle: " + err.Error()
+			renderForm(http.StatusUnprocessableEntity)
 			return
 		}
 	}
@@ -494,26 +555,6 @@ func (app *application) updateBookHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	http.Redirect(w, r, "/books/"+slug, http.StatusSeeOther)
-}
-
-func (app *application) deleteBookHandler(w http.ResponseWriter, r *http.Request) {
-	book, ok := app.bookFromPath(w, r)
-	if !ok {
-		return
-	}
-
-	// Primero la base de datos (si falla, no se pierde ningún archivo) y
-	// después los archivos, en best-effort.
-	if err := app.store.DeleteBook(r.Context(), book.ID); err != nil {
-		app.serverError(w, r, err)
-		return
-	}
-	if book.Filename != "" {
-		app.removeFiles(app.bookFilePaths(book.Filename))
-	}
-
-	app.logger.Info("book deleted", "slug", book.Slug, "filename", book.Filename)
-	http.Redirect(w, r, "/dashboard/books", http.StatusSeeOther)
 }
 
 func (app *application) bookFromPath(w http.ResponseWriter, r *http.Request) (*store.Book, bool) {

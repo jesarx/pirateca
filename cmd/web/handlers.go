@@ -129,13 +129,14 @@ func (app *application) bookDetailHandler(w http.ResponseWriter, r *http.Request
 
 	data := app.newTemplateData(r)
 	data.Book = book
+	data.Files = app.bookFiles(book.Filename)
 	if book.Description != "" {
 		data.MetaDescription = truncate(book.Description, 158)
 	} else {
 		data.MetaDescription = truncate(fmt.Sprintf("«%s» de %s (%s, %d). Descarga libre en PDF o torrent.",
 			book.Title, book.AuthorFullName(), book.PublisherName, book.Year), 158)
 	}
-	data.JSONLD = bookJSONLD(app.baseURLFor(r), book)
+	data.JSONLD = bookJSONLD(app.baseURLFor(r), book, data.Files.Cover)
 	app.render(w, r, http.StatusOK, "book.html", data)
 }
 

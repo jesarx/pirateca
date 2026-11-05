@@ -96,6 +96,49 @@ sudo chmod 600 /etc/pirateca.env
 
 Genera un secret decente con: `openssl rand -base64 48`
 
+### Dejar de sembrar al eliminar un libro
+
+Al eliminar un libro desde el dashboard, la app le pide a
+transmission-daemon que quite ese torrent (y solo ese, por su info
+hash). Para eso habla con su RPC en `http://127.0.0.1:9091` — el mismo
+que usa `transmission-remote`. Si tu transmission pide usuario y
+contraseña (lo normal en Debian/Ubuntu: `rpc-authentication-required`
+en settings.json), agrégalos al env:
+
+```sh
+sudo tee -a /etc/pirateca.env > /dev/null <<'EOF'
+PIRATECA_TRANSMISSION_USER=tu-usuario-rpc
+PIRATECA_TRANSMISSION_PASS=tu-contraseña-rpc
+EOF
+sudo systemctl restart pirateca
+```
+
+Son los mismos que usas con `transmission-remote -n usuario:contraseña`
+(`rpc-username` en settings.json; si no recuerdas la contraseña, edita
+`rpc-password` en settings.json con el daemon detenido: transmission la
+vuelve a cifrar al arrancar). Si el RPC está en otro puerto, usa
+`PIRATECA_TRANSMISSION_URL=http://127.0.0.1:PUERTO/transmission/rpc`.
+
+Si la app no puede hablar con transmission, el borrado igual se hace
+(el PDF desaparece, así que ya no se puede sembrar) y la página de
+resultado te da el comando exacto para quitar el torrent a mano.
+
+### Autollenado por ISBN (opcional, recomendado)
+
+El botón «Autollenar por ISBN» consulta desde el servidor Google Books y
+OpenLibrary. Sin API key, Google comparte una cuota diaria entre todos
+los que la usan sin key y a menudo responde «cuota agotada»; con una key
+propia (gratis, 1,000 consultas al día) funciona siempre:
+
+1. https://console.cloud.google.com → crea un proyecto.
+2. «APIs y servicios» → «Biblioteca» → habilita **Books API**.
+3. «Credenciales» → «Crear credenciales» → «Clave de API».
+
+```sh
+echo 'PIRATECA_GOOGLE_BOOKS_KEY=TU_CLAVE' | sudo tee -a /etc/pirateca.env > /dev/null
+sudo systemctl restart pirateca
+```
+
 ### Países de los visitantes (opcional)
 
 Para que el panel de países del dashboard muestre algo más que «Sin

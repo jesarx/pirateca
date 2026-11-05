@@ -5,7 +5,7 @@
   <meta property="og:title" content="{{.Book.Title}} — {{.Book.AuthorFullName}}">
   <meta property="og:description" content="{{.MetaDescription}}">
   <meta property="og:url" content="{{.BaseURL}}/books/{{.Book.Slug}}">
-  {{if .Book.Filename}}<meta property="og:image" content="{{.BaseURL}}/images?file={{.Book.Filename}}.jpg">{{end}}
+  {{if .Files.Cover}}<meta property="og:image" content="{{.BaseURL}}/images?file={{.Book.Filename}}.jpg">{{end}}
   <meta name="twitter:card" content="summary">
   {{with .JSONLD}}<script type="application/ld+json">{{.}}</script>{{end}}
 {{end}}
@@ -14,7 +14,7 @@
 {{with .Book}}
 <article class="rounded border border-gray-300 bg-white p-6 shadow-sm md:flex md:gap-8">
   <div class="mx-auto mb-6 w-56 shrink-0 md:mb-0">
-    {{if .Filename}}
+    {{if $.Files.Cover}}
     <img src="/images?file={{.Filename}}.jpg" alt="Portada de {{.Title}}" class="w-full rounded shadow">
     {{else}}
     <div class="flex aspect-[2/3] w-full items-center justify-center rounded bg-gray-200 px-2 text-center text-gray-500">{{.ShortTitle}}</div>
@@ -58,13 +58,15 @@
     </dl>
 
     <div class="mt-8 grid gap-3 sm:grid-cols-2">
-      {{if and .DirDwl .Filename}}
+      {{/* Los botones solo aparecen si el archivo existe en disco: un
+           enlace a un archivo que no está daría 404. */}}
+      {{if and .DirDwl $.Files.PDF}}
       <a href="/pdfs?file={{.Filename}}.pdf"
         class="rounded bg-gray-900 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-gray-700">
         ⬇ Descarga directa (PDF)
       </a>
       {{end}}
-      {{if .Filename}}
+      {{if $.Files.Torrent}}
       <a href="/torrs?file={{.Filename}}.pdf.torrent"
         class="rounded bg-gray-800 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-gray-900">
         ⬇ Descargar torrent
@@ -82,6 +84,12 @@
         ⧉ Copiar enlace
       </button>
     </div>
+    {{if $.IsAuthenticated}}
+    <p class="mt-6 border-t border-gray-200 pt-4 text-sm text-gray-500">
+      <a href="/dashboard/books/{{.ID}}/edit" class="font-semibold text-blue-600 hover:underline">✎ Editar este libro</a>
+      {{if not $.Files.PDF}}<span class="ml-2 rounded bg-amber-50 px-2 py-0.5 text-amber-900 ring-1 ring-amber-300">⚠ Este libro no tiene PDF en el servidor: súbelo desde Editar.</span>{{end}}
+    </p>
+    {{end}}
   </div>
 </article>
 {{end}}

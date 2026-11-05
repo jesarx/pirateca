@@ -13,7 +13,7 @@ import (
 // bookJSONLD arma el structured data schema.org/Book del detalle de un
 // libro. Se serializa en Go (no en la plantilla) para que el escape JSON
 // sea siempre correcto.
-func bookJSONLD(baseURL string, b *store.Book) template.JS {
+func bookJSONLD(baseURL string, b *store.Book, hasCover bool) template.JS {
 	ld := map[string]any{
 		"@context": "https://schema.org",
 		"@type":    "Book",
@@ -38,7 +38,7 @@ func bookJSONLD(baseURL string, b *store.Book) template.JS {
 	if b.Pages > 0 {
 		ld["numberOfPages"] = b.Pages
 	}
-	if b.Filename != "" {
+	if hasCover {
 		ld["image"] = baseURL + "/images?file=" + b.Filename + ".jpg"
 	}
 
